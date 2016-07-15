@@ -3,6 +3,7 @@ package com.rbkmoney.eventstock.client.poll;
 import com.rbkmoney.damsel.event_stock.DatasetTooBig;
 import com.rbkmoney.damsel.event_stock.StockEvent;
 import com.rbkmoney.eventstock.client.*;
+import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,7 @@ class PollingWorker implements Runnable {
     private final PollingConfig<StockEvent> pollingConfig;
     private final ServiceAdapter<StockEvent, EventConstraint> serviceAdapter;
     private final String subscriptionKey;
-    private RangeWalker rangeWalker;
+    private RangeWalker<? extends Comparable, ? extends EventRange> rangeWalker;
     private boolean running = true;
     private int pollingLimit;
 
@@ -37,6 +38,7 @@ class PollingWorker implements Runnable {
     public synchronized void run() {
         try {
             boolean exhausted = false;
+            boolean suspended = false;
 
             try {
                 if (rangeWalker == null) {
@@ -47,8 +49,8 @@ class PollingWorker implements Runnable {
                     }
                 }
 
-                while (!exhausted && running && !Thread.currentThread().isInterrupted()) {
-                    if (rangeWalker.isRangeOver()) {//TODO inclusive/exclusive range
+                while (!exhausted && !suspended && running && !Thread.currentThread().isInterrupted()) {
+                    if (rangeWalker.isRangeOver()) {
                         log.debug("Range is over: {}", rangeWalker);
                         exhausted = true;
                         continue;
@@ -66,25 +68,33 @@ class PollingWorker implements Runnable {
                         lastEvent = event;
                         try {
                             if (!pollingConfig.getEventFilter().accept(event)) {
+                                log.trace("Event not accepted: {}", event);
                                 continue;
                             }
+                            log.trace("Event accepted: {}", event);
                             eventHandler.handleEvent(event, subscriptionKey);
                         } catch (Throwable t) {
                             log.error("Error during event handling [subsKey: " + subscriptionKey + ", event: " + event + "]", t);
                             markIfInterrupted(t);
                         }
                     }
-                    if (events.size() < pollingLimit && !rangeWalker.getRange().isFromNow()) {
-                        exhausted = true;
+                    if (events.size() < pollingLimit) {
+                        if (rangeWalker.getWalkingRange().isToDefined()) {
+                            exhausted = true;
+                        } else {
+                            suspended = true;
+                        }
                     }
                     if (lastEvent != null) {
                         final StockEvent tmpLastEvent = lastEvent;
-                        rangeWalker.moveRange((walker) -> {//TODO Add inclusive/exclusive range support
+                        rangeWalker.moveRange((walker, boundInclusive) -> {
+                            Comparable val;
                             if (walker instanceof IdRangeWalker) {
-                                return ValuesExtractor.getEventId(tmpLastEvent);
+                                val = ValuesExtractor.getEventId(tmpLastEvent);
                             } else {
-                                return ValuesExtractor.getCreatedAt(tmpLastEvent);
+                                val = Instant.from(ValuesExtractor.getCreatedAt(tmpLastEvent));
                             }
+                            return new Pair(val, false);
                         });
                     }
                 }
@@ -134,7 +144,7 @@ class PollingWorker implements Runnable {
                 }
             }
         } catch (Throwable t) {
-            log.error("Error during poll processing, task is dead", t);
+            log.error("Error during poll processing, task is broken", t);
             markIfInterrupted(t);
         }
     }
@@ -153,7 +163,7 @@ class PollingWorker implements Runnable {
         }
     }
 
-    private <T, R extends EventRange, RW extends RangeWalker> RW initRange(R range, Function<R, RW> walkerCreator, Function<StockEvent, T> valExtractor, Supplier<R> emptyRangeSupplier) throws ServiceException {
+    private <T extends Comparable, R extends EventRange, RW extends RangeWalker> RW initRange(R range, Function<R, RW> walkerCreator, Function<StockEvent, T> valExtractor, Supplier<R> emptyRangeSupplier) throws ServiceException {
         RW rangeWalker;
         if (range.isFromDefined()) {
             rangeWalker = walkerCreator.apply(range);

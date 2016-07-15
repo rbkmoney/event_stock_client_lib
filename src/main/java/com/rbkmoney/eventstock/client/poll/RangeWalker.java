@@ -1,7 +1,9 @@
 package com.rbkmoney.eventstock.client.poll;
 
 import com.rbkmoney.eventstock.client.EventRange;
+import javafx.util.Pair;
 
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -9,7 +11,7 @@ import java.util.function.Function;
  *
  * Uses {@link EventRange} to walk through events set.
  */
-interface RangeWalker<T, R extends EventRange<T>> {
+interface RangeWalker<T extends Comparable, R extends EventRange<T>> {
     /**
      * @return initial range for this walker
      * */
@@ -33,7 +35,7 @@ interface RangeWalker<T, R extends EventRange<T>> {
      * @param function returns new bound value based on current from and to values.
      * @return moved range, which is equal to {@link #getWalkingRange()} result or null if range is over.
      * */
-    R moveRange(Function<RangeWalker<T, R>, T> function);
+    R moveRange(BiFunction<RangeWalker<T, R>, Boolean, Pair<T, Boolean>> function);
 
     /**
      * @return true - if current range is out of initial range bounds; false - otherwise.

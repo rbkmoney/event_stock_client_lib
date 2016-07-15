@@ -4,6 +4,8 @@ import com.rbkmoney.damsel.event_stock.*;
 import com.rbkmoney.damsel.event_stock.EventConstraint;
 import com.rbkmoney.damsel.event_stock.EventRange;
 import com.rbkmoney.damsel.payment_processing.NoLastEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
@@ -11,6 +13,7 @@ import java.util.Collection;
  * Created by vpankrashkin on 29.06.16.
  */
 class ESServiceAdapter implements ServiceAdapter<StockEvent, com.rbkmoney.eventstock.client.EventConstraint> {
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final EventRepositorySrv.Iface repository;
 
     public ESServiceAdapter(EventRepositorySrv.Iface repository) {
@@ -19,10 +22,12 @@ class ESServiceAdapter implements ServiceAdapter<StockEvent, com.rbkmoney.events
 
     @Override
     public Collection<StockEvent> getEventRange(com.rbkmoney.eventstock.client.EventConstraint srcConstraint, int limit) throws ServiceException {
-
+        log.trace("New event range request: {}, limit: {}", srcConstraint, limit);
         EventConstraint resConstraint = convertConstraint(srcConstraint, limit);
         try {
-            return repository.getEvents(resConstraint);
+            Collection<StockEvent> events = repository.getEvents(resConstraint);
+            log.trace("Received events: {}", events.size());
+            return events;
         } catch (Exception e) {
             throw new ServiceException(e);
         }

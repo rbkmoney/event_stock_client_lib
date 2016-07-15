@@ -12,7 +12,7 @@ class IdRangeWalker extends AbstractRangeWalker<Long> {
     }
 
     @Override
-    protected EventRange<Long> createRange(Long fromBound, Long toBound, EventRange initialRange) {
-        return new EventConstraint.EventIDRange(fromBound, initialRange.isFromInclusive(), toBound, initialRange.isToInclusive());
+    protected EventRange<Long> createRange(Long fromBound, boolean fromInclusive, Long toBound, boolean toInclusive, EventRange initialRange) {
+        return new EventConstraint.EventIDRange(fromBound, fromInclusive, toBound, toInclusive);
     }
 }

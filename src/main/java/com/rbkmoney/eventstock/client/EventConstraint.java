@@ -61,27 +61,6 @@ public class EventConstraint {
         public EventIDRange() {
             super();
         }
-
-        @Override
-        public boolean accept(Long val) {
-            if (val == null) {
-                return false;
-            }
-            if (getFrom() != null) {
-                int cmpResult = val.compareTo(getFrom());
-                if (!(cmpResult == 0 ? isFromInclusive() : cmpResult > 0)) {
-                    return false;
-                }
-            }
-
-            if (getTo() != null) {
-                int cmpResult = val.compareTo(getTo());
-                if (!(cmpResult == 0 ? isToInclusive() : cmpResult < 0)) {
-                    return false;
-                }
-            }
-            return true;
-        }
     }
 
     public static class EventTimeRange extends EventRange<Instant> {
@@ -96,28 +75,13 @@ public class EventConstraint {
         public EventTimeRange() {
             super();
         }
-
-        @Override
-        public boolean accept(Instant val) {
-            if (val == null) {
-                return false;
-            }
-
-            if (getFrom() != null) {
-                int cmpResult = val.compareTo(getFrom());
-                if (!(cmpResult == 0 ? isFromInclusive() : cmpResult > 0)) {
-                    return false;
-                }
-            }
-
-            if (getTo() != null) {
-                int cmpResult = val.compareTo(getTo());
-                if (!(cmpResult == 0 ? isToInclusive() : cmpResult < 0)) {
-                    return false;
-                }
-            }
-            return true;
-        }
     }
 
+    @Override
+    public String toString() {
+        return "EventConstraint{" +
+                "idRange=" + idRange +
+                ", timeRange=" + timeRange +
+                '}';
+    }
 }

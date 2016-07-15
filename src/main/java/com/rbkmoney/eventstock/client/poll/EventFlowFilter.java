@@ -34,11 +34,13 @@ class EventFlowFilter implements EventFilter<StockEvent> {
 
     @Override
     public boolean accept(StockEvent stockEvent) {
-        long id = ValuesExtractor.getEventId(stockEvent);
+        Long id = ValuesExtractor.getEventId(stockEvent);
         Instant time = Instant.from(ValuesExtractor.getCreatedAt(stockEvent));
 
         if (eventConstraint.accept(id, time)) {
-            return (filter != null && filter.match(stockEvent.getSourceEvent().getProcessingEvent()));
+            if (filter == null || filter.match(stockEvent.getSourceEvent().getProcessingEvent())) {
+                return true;
+            }
         }
         return false;
     }

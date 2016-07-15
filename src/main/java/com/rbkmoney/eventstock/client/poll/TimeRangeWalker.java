@@ -15,7 +15,7 @@ class TimeRangeWalker extends AbstractRangeWalker<Instant> {
     }
 
     @Override
-    protected EventRange<Instant> createRange(Instant fromBound, Instant toBound, EventRange initialRange) {
-        return new EventConstraint.EventTimeRange(fromBound, initialRange.isFromInclusive(), toBound, initialRange.isToInclusive());
+    protected EventRange<Instant> createRange(Instant fromBound, boolean fromInclusive, Instant toBound, boolean toInclusive, EventRange initialRange) {
+        return new EventConstraint.EventTimeRange(fromBound, fromInclusive, toBound, toInclusive);
     }
 }

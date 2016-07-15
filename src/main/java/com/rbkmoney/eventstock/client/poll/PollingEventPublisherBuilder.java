@@ -100,7 +100,6 @@ public class PollingEventPublisherBuilder {
         Poller poller = new Poller(serviceAdapter, maxPoolSize, pollDelay);
 
         PollingConfig<StockEvent> pollingConfig = new PollingConfig<>(
-                null,
                 eventHandler == null ? DEFAULT_EVENT_HANDLER : eventHandler,
                 errorHandler == null ? DEFAULT_ERROR_HANDLER : errorHandler,
                 maxQuerySize);

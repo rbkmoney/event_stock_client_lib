@@ -4,13 +4,13 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 
 /**
  * Created by vpankrashkin on 12.07.16.
  */
 class TemporalConverter {
-    //TODO find the way to work with ISO and java time api universally
-    private static final DateTimeFormatter FORMATTER = ISO_DATE_TIME;
+    private static final DateTimeFormatter FORMATTER = ISO_INSTANT;
 
     public static TemporalAccessor stringToTemporal(String dateTimeStr) throws IllegalArgumentException {
         try {
