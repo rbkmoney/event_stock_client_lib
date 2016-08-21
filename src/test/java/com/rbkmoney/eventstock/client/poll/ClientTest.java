@@ -1,17 +1,18 @@
 package com.rbkmoney.eventstock.client.poll;
 
-import com.rbkmoney.damsel.event_stock.EventConstraint;
-import com.rbkmoney.damsel.event_stock.EventRange;
-import com.rbkmoney.eventstock.client.*;
 import com.rbkmoney.damsel.base.InvalidRequest;
-import com.rbkmoney.damsel.domain.InvoicePaid;
-import com.rbkmoney.damsel.domain.InvoiceStatus;
-import com.rbkmoney.damsel.domain.InvoiceUnpaid;
+import com.rbkmoney.damsel.domain.Currency;
+import com.rbkmoney.damsel.domain.*;
 import com.rbkmoney.damsel.event_stock.*;
+import com.rbkmoney.damsel.event_stock.EventRange;
 import com.rbkmoney.damsel.payment_processing.*;
+import com.rbkmoney.eventstock.client.DefaultSubscriberConfig;
+import com.rbkmoney.eventstock.client.EventFilter;
+import com.rbkmoney.eventstock.client.EventHandler;
 import com.rbkmoney.thrift.filter.Filter;
 import com.rbkmoney.thrift.filter.PathConditionFilter;
 import com.rbkmoney.thrift.filter.condition.Relation;
+import com.rbkmoney.thrift.filter.converter.TemporalConverter;
 import com.rbkmoney.thrift.filter.rule.PathConditionRule;
 import com.rbkmoney.woody.thrift.impl.http.THServiceBuilder;
 import org.apache.thrift.TException;
@@ -22,13 +23,12 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
 import java.util.stream.LongStream;
 
 /**
@@ -37,8 +37,8 @@ import java.util.stream.LongStream;
 public class ClientTest extends AbstractTest {
     private static final Logger log = LoggerFactory.getLogger(ClientTest.class);
     private class ERSImpl implements EventRepositorySrv.Iface {
-        final  Long lastEventId = 10L;
-        final Long firstEventId = Long.MIN_VALUE;
+        final  Long lastEventId = 0L;
+        final Long firstEventId = 0L;
         private long expectedMax = Long.MAX_VALUE;
         private AtomicInteger rangeRequestsCount = new AtomicInteger();
 
@@ -227,6 +227,16 @@ public class ClientTest extends AbstractTest {
         eventPublisher.destroy();
     }
 
+    //@Test
+    public void testServerRun() throws InterruptedException {
+
+        ERSImpl ers = new ERSImpl(Integer.MAX_VALUE);
+        addServlet(new THServiceBuilder().build(EventRepositorySrv.Iface.class, ers), "/test");
+
+
+       Thread.sleep(Integer.MAX_VALUE);
+    }
+
     private EventFilter createEventFilter(Long from, Long to, boolean addFilter) {
         com.rbkmoney.eventstock.client.EventRange eventRange = new com.rbkmoney.eventstock.client.EventConstraint.EventIDRange();
         eventRange.setFromInclusive(from);
@@ -238,8 +248,40 @@ public class ClientTest extends AbstractTest {
 
     private Event createEvent(long id, boolean flag) {
         String timeString =  TemporalConverter.temporalToString(Instant.now());
-        Event event = flag ? new Event(id, timeString,EventSource.invoice(""+id), 0, EventPayload.invoice_event(InvoiceEvent.invoice_status_changed(new InvoiceStatusChanged(InvoiceStatus.paid(new InvoicePaid())))))
-                :new Event(id, timeString,EventSource.invoice(""+id), 0, EventPayload.invoice_event(InvoiceEvent.invoice_status_changed(new InvoiceStatusChanged(InvoiceStatus.unpaid(new InvoiceUnpaid())))));
+        Event event = flag ?
+                new Event(
+                        id,
+                        timeString,
+                        EventSource.invoice(""+id),
+                        0,
+                        EventPayload.invoice_event(
+                                InvoiceEvent.invoice_created(
+                                        new InvoiceCreated(
+                                                new Invoice(
+                                                        id+"",
+                                                        com.rbkmoney.thrift.filter.converter.TemporalConverter.temporalToString(Instant.now()),
+                                                        1,
+                                                        InvoiceStatus.unpaid(new InvoiceUnpaid()),
+                                                        "",
+                                                        "",
+                                                        new Funds(100, new Currency("", "RUB", (short) 1, (short) 0)),
+                                                        ByteBuffer.allocate(0)
+                                                )
+                                        )
+                                )
+                        )
+                )
+                :
+                new Event(
+                        id,
+                        timeString,
+                        EventSource.invoice(""+(id-1)),
+                        0,
+                        EventPayload.invoice_event(
+                                InvoiceEvent.invoice_status_changed(
+                                        new InvoiceStatusChanged(
+                                                InvoiceStatus.unpaid(
+                                                        new InvoiceUnpaid())))));
         return event;
     }
 
