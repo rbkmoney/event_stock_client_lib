@@ -3,6 +3,7 @@ package com.rbkmoney.eventstock.client.poll;
 import com.rbkmoney.damsel.event_stock.DatasetTooBig;
 import com.rbkmoney.damsel.event_stock.StockEvent;
 import com.rbkmoney.eventstock.client.*;
+import com.rbkmoney.woody.api.concurrent.WRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +22,7 @@ class PollingWorker implements Runnable {
     private final PollingConfig<StockEvent> pollingConfig;
     private final ServiceAdapter<StockEvent, EventConstraint> serviceAdapter;
     private final String subscriptionKey;
+    private final Runnable wRunnable;
     private RangeWalker<? extends Comparable, ? extends EventRange> rangeWalker;
     private boolean running = true;
     private int pollingLimit;
@@ -30,11 +32,16 @@ class PollingWorker implements Runnable {
         this.pollingConfig = pollingConfig;
         this.serviceAdapter = serviceAdapter;
         this.subscriptionKey = subscriptionKey;
+        this.wRunnable = WRunnable.create(() -> runPolling());
         this.pollingLimit = pollingConfig.getMaxQuerySize();
     }
 
     @Override
-    public synchronized void run() {
+    public void run() {
+        wRunnable.run();
+    }
+
+    private synchronized void runPolling() {
         try {
             LogSupport.setSubscriptionKey(subscriptionKey);
             boolean exhausted = false;
