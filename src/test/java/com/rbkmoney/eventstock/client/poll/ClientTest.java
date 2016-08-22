@@ -1,5 +1,10 @@
 package com.rbkmoney.eventstock.client.poll;
 
+import com.rbkmoney.damsel.domain.*;
+import com.rbkmoney.damsel.domain.Currency;
+import com.rbkmoney.damsel.event_stock.EventConstraint;
+import com.rbkmoney.damsel.event_stock.EventRange;
+import com.rbkmoney.eventstock.client.*;
 import com.rbkmoney.damsel.base.InvalidRequest;
 import com.rbkmoney.damsel.domain.Currency;
 import com.rbkmoney.damsel.domain.*;
@@ -225,16 +230,6 @@ public class ClientTest extends AbstractTest {
 
         Assert.assertTrue(ers.getRangeRequestsCount() > 7);
         eventPublisher.destroy();
-    }
-
-    //@Test
-    public void testServerRun() throws InterruptedException {
-
-        ERSImpl ers = new ERSImpl(Integer.MAX_VALUE);
-        addServlet(new THServiceBuilder().build(EventRepositorySrv.Iface.class, ers), "/test");
-
-
-       Thread.sleep(Integer.MAX_VALUE);
     }
 
     private EventFilter createEventFilter(Long from, Long to, boolean addFilter) {
