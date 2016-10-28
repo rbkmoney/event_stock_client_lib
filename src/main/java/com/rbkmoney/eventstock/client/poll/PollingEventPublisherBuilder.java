@@ -114,7 +114,7 @@ public class PollingEventPublisherBuilder {
 
 
 
-    public THSpawnClientBuilder getClientBuilder() {
+    protected THSpawnClientBuilder getClientBuilder() {
         THSpawnClientBuilder clientBuilder = new THSpawnClientBuilder().withAddress(uri);
         return clientBuilder;
     }
