@@ -120,33 +120,11 @@ public class ClientTest extends AbstractTest {
         ERSImpl ers = new ERSImpl(1000);
 
         addServlet(new THServiceBuilder().withEventListener(
-                new ServiceEventListener() {
-                    @Override
-                    public void notifyEvent(ServiceEvent serviceEvent) {
-                        log.info(serviceEvent.getActiveSpan().getMetadata().getValue(MetadataProperties.CALL_ERROR));
-                    }
-
-                    @Override
-                    public void notifyEvent(com.rbkmoney.woody.api.event.Event event) {
-                        return;
-                    }
-                }
+                (ServiceEventListener<ServiceEvent>) serviceEvent -> log.info(serviceEvent.getActiveSpan().getMetadata().getValue(MetadataProperties.CALL_ERROR))
         ).build(EventRepositorySrv.Iface.class, ers), "/test");
 
-        PollingEventPublisherBuilder eventPublisherBuilder = new PollingEventPublisherBuilder()
-                .withClientBuilder(new THSpawnClientBuilder()
-                        .withAddress(new URI(getUrlString("/test")))
-                        .withEventListener(new ClientEventListener() {
-                            @Override
-                            public void notifyEvent(ClientEvent clientEvent) {
-                                log.info(clientEvent.getActiveSpan().getMetadata().getValue(MetadataProperties.CALL_ERROR));
-                            }
-
-                            @Override
-                            public void notifyEvent(com.rbkmoney.woody.api.event.Event event) {
-
-                            }
-                        }));
+        PollingEventPublisherBuilder eventPublisherBuilder = new PollingEventPublisherBuilder();
+        eventPublisherBuilder.withURI(new URI(getUrlString("/test")));
         eventPublisherBuilder.withEventHandler(new EHImpl(latch, receivedIdList));
         eventPublisherBuilder.withMaxQuerySize(2);
 
