@@ -15,15 +15,10 @@ import java.util.Collection;
  */
 class ESServiceAdapter implements ServiceAdapter<StockEvent, com.rbkmoney.eventstock.client.EventConstraint> {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
-    private EventRepositorySrv.Iface repository;
+    private final EventRepositorySrv.Iface repository;
 
     public ESServiceAdapter(EventRepositorySrv.Iface repository) {
         this.repository = repository;
-    }
-
-    public ESServiceAdapter withRepository(EventRepositorySrv.Iface repository){
-        this.repository = repository;
-        return this;
     }
 
     @Override
