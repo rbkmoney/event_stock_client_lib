@@ -92,17 +92,56 @@ public class PollingEventPublisherBuilder {
         return this;
     }
 
+    private THSpawnClientBuilder clientBuilder;
+    private ESServiceAdapter serviceAdapter;
+    private Poller poller;
+    private PollingConfig<StockEvent> pollingConfig;
+
+    public PollingConfig<StockEvent> getPollingConfig() {
+        return pollingConfig;
+    }
+
+    public Poller getPoller() {
+        return poller;
+    }
+
+    public ESServiceAdapter getServiceAdapter() {
+        return serviceAdapter;
+    }
+
+    public THSpawnClientBuilder getClientBuilder() {
+        return clientBuilder;
+    }
+
+    public PollingEventPublisherBuilder withClientBuilder(THSpawnClientBuilder clientBuilder) {
+        this.clientBuilder = clientBuilder;
+        return this;
+    }
+
+    public PollingEventPublisherBuilder withServiceAdapter(ESServiceAdapter serviceAdapter) {
+        this.serviceAdapter = serviceAdapter;
+        return this;
+    }
+
+    public PollingEventPublisherBuilder withPoller(Poller poller) {
+        this.poller = poller;
+        return this;
+    }
+
+    public PollingEventPublisherBuilder withPollingConfig(PollingConfig<StockEvent> pollingConfig ) {
+        this.pollingConfig = pollingConfig;
+        return this;
+    }
+
     public PollingEventPublisher<StockEvent> build() {
-        THSpawnClientBuilder clientBuilder = new THSpawnClientBuilder();
-        clientBuilder.withAddress(uri);
+        THSpawnClientBuilder clientBuilder = (this.clientBuilder == null ? new THSpawnClientBuilder().withAddress(uri) : this.clientBuilder);
+        ESServiceAdapter serviceAdapter = (this.serviceAdapter == null ? new ESServiceAdapter(clientBuilder.build(EventRepositorySrv.Iface.class)) : this.serviceAdapter);
+        Poller poller = (this.poller == null ? new Poller(serviceAdapter, maxPoolSize, pollDelay) : this.poller);
 
-        ESServiceAdapter serviceAdapter = new ESServiceAdapter(clientBuilder.build(EventRepositorySrv.Iface.class));
-        Poller poller = new Poller(serviceAdapter, maxPoolSize, pollDelay);
-
-        PollingConfig<StockEvent> pollingConfig = new PollingConfig<>(
+        PollingConfig<StockEvent> pollingConfig = (this.pollingConfig == null ? new PollingConfig<>(
                 eventHandler == null ? DEFAULT_EVENT_HANDLER : eventHandler,
                 errorHandler == null ? DEFAULT_ERROR_HANDLER : errorHandler,
-                maxQuerySize);
+                maxQuerySize) : this.pollingConfig);
 
         PollingEventPublisher eventPublisher = new PollingEventPublisher(pollingConfig, poller);
         return eventPublisher;

@@ -15,10 +15,15 @@ import java.util.Collection;
  */
 class ESServiceAdapter implements ServiceAdapter<StockEvent, com.rbkmoney.eventstock.client.EventConstraint> {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
-    private final EventRepositorySrv.Iface repository;
+    private EventRepositorySrv.Iface repository;
 
     public ESServiceAdapter(EventRepositorySrv.Iface repository) {
         this.repository = repository;
+    }
+
+    public ESServiceAdapter withRepository(EventRepositorySrv.Iface repository){
+        this.repository = repository;
+        return this;
     }
 
     @Override
@@ -42,7 +47,7 @@ class ESServiceAdapter implements ServiceAdapter<StockEvent, com.rbkmoney.events
             StockEvent stockEvent = repository.getFirstEvent();
             log.debug("Received event: {}", stockEvent);
             return stockEvent;
-        } catch (NoLastEvent e) {
+        } catch (NoStockEvent e) {
             return null;
         } catch (Exception e) {
             throw new ServiceException(e);
@@ -56,7 +61,7 @@ class ESServiceAdapter implements ServiceAdapter<StockEvent, com.rbkmoney.events
             StockEvent stockEvent = repository.getLastEvent();
             log.debug("Received event: {}", stockEvent);
             return stockEvent;
-        } catch (NoLastEvent e) {
+        } catch (NoStockEvent e) {
             return null;
         } catch (Exception e) {
             throw new ServiceException(e);
