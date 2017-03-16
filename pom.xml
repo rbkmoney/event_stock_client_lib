@@ -12,19 +12,14 @@
 
     <groupId>com.rbkmoney</groupId>
     <artifactId>eventstock-client</artifactId>
-    <version>1.0.6</version>
+    <version>1.0.7</version>
 
     <dependencies>
         <!--RBK libs-->
         <dependency>
             <groupId>com.rbkmoney.woody</groupId>
             <artifactId>woody-thrift</artifactId>
-            <version>1.0.4</version>
-        </dependency>
-        <dependency>
-            <groupId>com.rbkmoney.thrift</groupId>
-            <artifactId>libthrift</artifactId>
-            <version>0.9.3-5</version>
+            <version>1.1.1</version>
         </dependency>
         <dependency>
             <groupId>com.rbkmoney</groupId>
