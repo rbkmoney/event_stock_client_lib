@@ -143,7 +143,7 @@ public class AbstractTest {
                                                 new Invoice(
                                                         id+"",
                                                         "kek_id",
-                                                        1,
+                                                        "1",
                                                         "kek_time",
                                                         InvoiceStatus.unpaid(new InvoiceUnpaid()),
                                                         new InvoiceDetails("kek_product"),

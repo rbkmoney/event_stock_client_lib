@@ -19,12 +19,12 @@ import org.junit.Test;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 /**
@@ -36,7 +36,7 @@ public class LoosingInitStartTest extends AbstractTest {
     int expectedMax = 5;
 
     private class ERSImpl implements EventRepositorySrv.Iface {
-        private AtomicInteger currIndex = new AtomicInteger();
+        private AtomicLong currIndex = new AtomicLong();
         private AtomicBoolean wasRequest = new AtomicBoolean(false);
         List<StockEvent> events;
 
@@ -44,14 +44,14 @@ public class LoosingInitStartTest extends AbstractTest {
         public List<StockEvent> getEvents(EventConstraint constraint) throws InvalidRequest, DatasetTooBig, TException {
             log.info("Client: Get Events: {}", constraint);
             currIndex.set(constraint.getEventRange().getIdRange().getFromId().isSetInclusive() ?
-                            (int)constraint.getEventRange().getIdRange().getFromId().getInclusive() :
-                    (int)constraint.getEventRange().getIdRange().getFromId().getExclusive() + 1
+                            constraint.getEventRange().getIdRange().getFromId().getInclusive() :
+                    constraint.getEventRange().getIdRange().getFromId().getExclusive() + 1
             );
             if (currIndex.get() > expectedMax) {
                 return Collections.emptyList();
             }
-            int from = currIndex.get();
-            int to = Math.min(currIndex.addAndGet(constraint.getLimit()), (expectedMax));
+            int from = (int) currIndex.get();
+            int to = (int) Math.min(currIndex.addAndGet(constraint.getLimit()), (expectedMax));
             List<StockEvent> resEvents = events.subList(from, to);
             return resEvents;
         }
@@ -85,7 +85,7 @@ public class LoosingInitStartTest extends AbstractTest {
                     });
             events = createEvents(APIConversionUtil.convertConstraint(constraint, expectedMax), expectedMax);
 
-            StockEvent event = events.get(currIndex.addAndGet(getFirst ? 0 : skipEvents));
+            StockEvent event = events.get((int)currIndex.addAndGet(getFirst ? 0 : skipEvents));
             return event;
         }
 
@@ -128,8 +128,7 @@ public class LoosingInitStartTest extends AbstractTest {
         eventPublisher.subscribe(new DefaultSubscriberConfig<>(filter));
         latch.await();
 
-
-        Assert.assertEquals(Arrays.asList(0L, 1L, 2L, 3L, 4L), receivedIdList);
+        Assert.assertEquals(LongStream.range(initEventId, expectedMax).boxed().collect(Collectors.toList()), receivedIdList);
         eventPublisher.destroy();
     }
 }
