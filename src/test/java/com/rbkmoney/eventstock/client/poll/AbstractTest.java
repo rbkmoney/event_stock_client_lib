@@ -20,6 +20,7 @@ import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.server.TServlet;
+import org.eclipse.jetty.server.NetworkConnector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -46,19 +47,20 @@ public class AbstractTest {
 
     private HandlerCollection handlerCollection;
     protected Server server;
-    protected int serverPort = 8080;
+    protected int serverPort = -1;
     protected TProcessor tProcessor;
 
     @Before
     public void startJetty() throws Exception {
 
-        server = new Server(serverPort);
+        server = new Server(0);
         HandlerCollection contextHandlerCollection = new HandlerCollection(true); // important! use parameter
         // mutableWhenRunning==true
         this.handlerCollection = contextHandlerCollection;
         server.setHandler(contextHandlerCollection);
 
         server.start();
+        serverPort = ((NetworkConnector)server.getConnectors()[0]).getLocalPort();
     }
 
     protected void addServlet(Servlet servlet, String mapping) {
