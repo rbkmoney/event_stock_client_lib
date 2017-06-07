@@ -63,7 +63,7 @@ class ESServiceAdapter implements ServiceAdapter<StockEvent, com.rbkmoney.events
         }
     }
 
-    private EventConstraint convertConstraint(com.rbkmoney.eventstock.client.EventConstraint scrConstraint, int limit) {
+    public static EventConstraint convertConstraint(com.rbkmoney.eventstock.client.EventConstraint scrConstraint, int limit) {
         EventRange resRange = new EventRange();
         if (scrConstraint.getIdRange() != null) {
             resRange.setIdRange(convertRange(scrConstraint.getIdRange()));
@@ -73,7 +73,7 @@ class ESServiceAdapter implements ServiceAdapter<StockEvent, com.rbkmoney.events
         return new EventConstraint(resRange, limit);
     }
 
-    private EventIDRange convertRange(com.rbkmoney.eventstock.client.EventConstraint.EventIDRange srcIdRange) {
+    private static EventIDRange convertRange(com.rbkmoney.eventstock.client.EventConstraint.EventIDRange srcIdRange) {
         EventIDRange resIdRange = new EventIDRange();
 
         if (srcIdRange.isFromDefined()) {
@@ -86,7 +86,7 @@ class ESServiceAdapter implements ServiceAdapter<StockEvent, com.rbkmoney.events
         return resIdRange;
     }
 
-    private EventTimeRange convertRange(com.rbkmoney.eventstock.client.EventConstraint.EventTimeRange srcTimeRange) {
+    private static EventTimeRange convertRange(com.rbkmoney.eventstock.client.EventConstraint.EventTimeRange srcTimeRange) {
         EventTimeRange resTimeRange = new EventTimeRange();
 
         if (srcTimeRange.isFromDefined()) {

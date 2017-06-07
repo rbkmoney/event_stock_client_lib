@@ -44,7 +44,7 @@ class Poller {
 
                     @Override
                     public Thread newThread(Runnable r) {
-                        Thread t =  new Thread(threadGroup, r, "T" + counter.incrementAndGet());
+                        Thread t = new Thread(threadGroup, r, "T" + counter.incrementAndGet());
                         t.setDaemon(true);
                         return t;
                     }
@@ -87,22 +87,34 @@ class Poller {
     }
 
     boolean directRemovePolling(String subsKey) {
+        return directRemovePolling(subsKey, false);
+    }
+
+
+        boolean directRemovePolling(String subsKey, boolean interrupted) {
+        PollingWorker worker = null;
+        boolean removed = false;
         lock.lock();
         try {
-            boolean removed;
             Pair<Future, PollingWorker> pair = pollers.get(subsKey);
             if (pair != null) {
                 pair.getValue().stop();
                 pair.getKey().cancel(true);
                 pollers.remove(subsKey);
+                worker = pair.getValue();
                 removed = true;
-            } else {
-                removed = false;
             }
-            logTaskRemoval(removed, subsKey);
             return removed;
         } finally {
             lock.unlock();
+            if (worker != null) {
+                if (interrupted) {
+                    worker.getPollingConfig().getEventHandler().handleInterrupted(subsKey);
+                } else {
+                    worker.getPollingConfig().getEventHandler().handleCompleted(subsKey);
+                }
+            }
+            logTaskRemoval(removed, subsKey);
         }
     }
 
@@ -121,7 +133,11 @@ class Poller {
         lock.lock();
         try {
             for (String subsKey : pollers.keySet()) {
-                logTaskRemoval(directRemovePolling(subsKey), subsKey);
+                try {
+                    directRemovePolling(subsKey);
+                } catch (Throwable t) {
+                    log.error("Failed to remove subscription correctly", t);
+                }
             }
         } finally {
             lock.unlock();

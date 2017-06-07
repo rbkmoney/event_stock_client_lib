@@ -1,20 +1,13 @@
 package com.rbkmoney.eventstock.client.poll;
 
-import com.rbkmoney.damsel.domain.*;
-import com.rbkmoney.damsel.domain.Currency;
 import com.rbkmoney.damsel.event_stock.EventConstraint;
-import com.rbkmoney.damsel.event_stock.EventRange;
-import com.rbkmoney.damsel.payment_processing.Event;
 import com.rbkmoney.damsel.base.InvalidRequest;
 import com.rbkmoney.damsel.event_stock.*;
 import com.rbkmoney.damsel.payment_processing.*;
-import com.rbkmoney.eventstock.client.DefaultSubscriberConfig;
-import com.rbkmoney.eventstock.client.EventFilter;
-import com.rbkmoney.eventstock.client.EventHandler;
+import com.rbkmoney.eventstock.client.*;
 import com.rbkmoney.thrift.filter.Filter;
 import com.rbkmoney.thrift.filter.PathConditionFilter;
 import com.rbkmoney.thrift.filter.condition.Relation;
-import com.rbkmoney.thrift.filter.converter.TemporalConverter;
 import com.rbkmoney.thrift.filter.rule.PathConditionRule;
 import com.rbkmoney.woody.api.event.*;
 import com.rbkmoney.woody.api.trace.MetadataProperties;
@@ -27,7 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -56,13 +48,13 @@ public class ClientTest extends AbstractTest {
         public List<StockEvent> getEvents(EventConstraint constraint) throws InvalidRequest, DatasetTooBig, TException {
             log.info("Client: Get Events: {}", constraint);
             rangeRequestsCount.incrementAndGet();
-            return createEvents(constraint, expectedMax);
+            return EventGenerator.createEvents(constraint, expectedMax);
         }
 
         @Override
         public StockEvent getLastEvent() throws NoLastEvent, TException {
             log.info("Client: Get last event");
-            StockEvent event = new StockEvent(SourceEvent.processing_event(createEvent(lastEventId, true)));
+            StockEvent event = new StockEvent(SourceEvent.processing_event(EventGenerator.createEvent(lastEventId, true)));
             log.info("Client: result: {}", event);
             return event;
         }
@@ -70,7 +62,7 @@ public class ClientTest extends AbstractTest {
         @Override
         public StockEvent getFirstEvent() throws NoStockEvent, TException {
             log.info("Client: Get first event");
-            StockEvent event = new StockEvent(SourceEvent.processing_event(createEvent(firstEventId, true)));
+            StockEvent event = new StockEvent(SourceEvent.processing_event(EventGenerator.createEvent(firstEventId, true)));
             log.info("Client: result: {}", event);
             return event;
         }
@@ -93,14 +85,15 @@ public class ClientTest extends AbstractTest {
         }
 
         @Override
-        public void handleEvent(StockEvent event, String subsKey) {
+        public EventAction handle(StockEvent event, String subsKey) {
             log.info(subsKey+":Handled object: "+event);
             if (eventIds != null)
             eventIds.add(((StockEvent) event).getSourceEvent().getProcessingEvent().getId());
+            return EventAction.CONTINUE;
         }
 
         @Override
-        public void handleNoMoreElements(String subsKey) {
+        public void handleCompleted(String subsKey) {
             log.info(subsKey+":No more elements");
             if (latch != null)
             latch.countDown();
@@ -239,66 +232,4 @@ public class ClientTest extends AbstractTest {
         return eventFlowFilter;
     }
 
-    private Event createEvent(long id, boolean flag) {
-        String timeString =  TemporalConverter.temporalToString(Instant.now());
-        Event event = flag ?
-                new Event(
-                        id,
-                        timeString,
-                        EventSource.invoice(""+id),
-                        0,
-                        EventPayload.invoice_event(
-                                InvoiceEvent.invoice_created(
-                                        new InvoiceCreated(
-                                                new Invoice(
-                                                        id+"",
-                                                        "kek_id",
-                                                        1,
-                                                        "kek_time",
-                                                        InvoiceStatus.unpaid(new InvoiceUnpaid()),
-                                                        new InvoiceDetails("kek_product"),
-                                                        "kek_time",
-                                                        new Cash(100, new CurrencyRef("RUB"))
-                                                )
-                                        )
-                                )
-                        )
-                )
-                :
-                new Event(
-                        id,
-                        timeString,
-                        EventSource.invoice(""+(id-1)),
-                        0,
-                        EventPayload.invoice_event(
-                                InvoiceEvent.invoice_status_changed(
-                                        new InvoiceStatusChanged(
-                                                InvoiceStatus.unpaid(
-                                                        new InvoiceUnpaid())))));
-        return event;
-    }
-
-    private List<StockEvent> createEvents(EventConstraint constraint, long expectedMax) {
-        EventIDRange idRange = constraint.getEventRange().getIdRange();
-        Long fromId = (Long) idRange.getFromId().getFieldValue();
-        Long toId = (Long) Optional.of(idRange).map(EventIDRange::getToId).map(EventIDBound::getFieldValue).orElse(null);
-        if (fromId >= expectedMax) {
-            return Collections.emptyList();
-        }
-        toId = toId == null ? Long.MAX_VALUE : toId;
-        int limit = constraint.getLimit();
-        if (fromId >= toId) {
-            return Collections.emptyList();
-        } else {
-            List list = new ArrayList();
-            for (long i = (constraint.getEventRange().getIdRange().getFromId().isSetInclusive() ? 0 : 1), counter = 0;
-                 counter < limit && i+fromId <= (Optional.of(constraint).map(EventConstraint::getEventRange).map(EventRange::getIdRange).map(EventIDRange::getToId).map(EventIDBound::isSetInclusive).orElse(false) ? toId : toId-1);
-                 ++i, ++counter) {
-                long id = i+fromId;
-                if (id <= expectedMax)
-                list.add(new StockEvent(SourceEvent.processing_event(createEvent(id, id % 2 ==0))));
-            }
-            return list;
-        }
-    }
 }
