@@ -18,6 +18,10 @@ import java.util.*;
  * Created by vpankrashkin on 07.06.17.
  */
 public class EventGenerator {
+    public static StockEvent createStockEvent(long id, boolean flag) {
+        return new StockEvent(SourceEvent.processing_event(createEvent(id, flag)));
+    }
+
     public static Event createEvent(long id, boolean flag) {
         String timeString =  TemporalConverter.temporalToString(Instant.now());
         Event event = flag ?
@@ -32,7 +36,7 @@ public class EventGenerator {
                                                 new Invoice(
                                                         id+"",
                                                         "kek_id",
-                                                        1,
+                                                        "1",
                                                         "kek_time",
                                                         InvoiceStatus.unpaid(new InvoiceUnpaid()),
                                                         new InvoiceDetails("kek_product"),
@@ -55,10 +59,6 @@ public class EventGenerator {
                                                 InvoiceStatus.unpaid(
                                                         new InvoiceUnpaid())))));
         return event;
-    }
-
-    public static StockEvent createStockEvent(long id, boolean flag) {
-        return new StockEvent(SourceEvent.processing_event(createEvent(id, false)));
     }
 
     public static List<StockEvent> createEvents(com.rbkmoney.damsel.event_stock.EventConstraint constraint, long expectedMax) {

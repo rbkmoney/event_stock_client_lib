@@ -4,22 +4,16 @@ import com.rbkmoney.damsel.event_stock.StockEvent;
 import com.rbkmoney.eventstock.client.*;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-
-import static org.mockito.Mockito.mock;
-
 /**
  * Created by vpankrashkin on 07.06.17.
  */
-@Ignore
 public class EventHandlerTest {
     PollingEventPublisher<StockEvent> publisher;
     CountDownLatch latch;

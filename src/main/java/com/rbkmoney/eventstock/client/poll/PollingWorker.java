@@ -11,7 +11,6 @@ import java.time.Instant;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -217,7 +216,7 @@ class PollingWorker implements Runnable {
             } else {
                 val = Instant.from(ValuesExtractor.getCreatedAt(lastEvent));
             }
-            return new Pair(val, false);
+            return new AbstractMap.SimpleEntry(val, false);
         });
         log.debug("Range moved to: {}", rangeWalker);
     }

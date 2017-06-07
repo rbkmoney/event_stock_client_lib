@@ -2,6 +2,7 @@ package com.rbkmoney.eventstock.client.poll;
 
 import com.rbkmoney.damsel.event_stock.*;
 import com.rbkmoney.damsel.event_stock.EventConstraint;
+import com.rbkmoney.thrift.filter.converter.TemporalConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

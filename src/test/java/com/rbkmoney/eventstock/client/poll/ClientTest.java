@@ -223,14 +223,5 @@ public class ClientTest extends AbstractTest {
         Assert.assertTrue(ers.getRangeRequestsCount() > 7);
         eventPublisher.destroy();
     }
-    private EventFilter createEventFilter(Long from, Long to, boolean addFilter) {
-        com.rbkmoney.eventstock.client.EventRange eventRange = new com.rbkmoney.eventstock.client.EventConstraint.EventIDRange();
-        eventRange.setFromInclusive(from);
-        eventRange.setToExclusive(to);
-        Filter filter = !addFilter ? null : new PathConditionFilter(new PathConditionRule("payload.invoice_event.invoice_status_changed.status", new com.rbkmoney.thrift.filter.condition.CompareCondition("unpaid", Relation.EQ)));
-        EventFlowFilter eventFlowFilter = new EventFlowFilter(new com.rbkmoney.eventstock.client.EventConstraint(eventRange), filter);
-        return eventFlowFilter;
-    }
-
 
 }
