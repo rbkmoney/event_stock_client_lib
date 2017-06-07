@@ -9,7 +9,8 @@ import com.rbkmoney.thrift.filter.Filter;
 import com.rbkmoney.thrift.filter.PathConditionFilter;
 import com.rbkmoney.thrift.filter.condition.Relation;
 import com.rbkmoney.thrift.filter.rule.PathConditionRule;
-import com.rbkmoney.woody.api.event.*;
+import com.rbkmoney.woody.api.event.ServiceEvent;
+import com.rbkmoney.woody.api.event.ServiceEventListener;
 import com.rbkmoney.woody.api.trace.MetadataProperties;
 import com.rbkmoney.woody.thrift.impl.http.THServiceBuilder;
 import org.apache.thrift.TException;
@@ -222,7 +223,6 @@ public class ClientTest extends AbstractTest {
         Assert.assertTrue(ers.getRangeRequestsCount() > 7);
         eventPublisher.destroy();
     }
-
     private EventFilter createEventFilter(Long from, Long to, boolean addFilter) {
         com.rbkmoney.eventstock.client.EventRange eventRange = new com.rbkmoney.eventstock.client.EventConstraint.EventIDRange();
         eventRange.setFromInclusive(from);
@@ -231,5 +231,6 @@ public class ClientTest extends AbstractTest {
         EventFlowFilter eventFlowFilter = new EventFlowFilter(new com.rbkmoney.eventstock.client.EventConstraint(eventRange), filter);
         return eventFlowFilter;
     }
+
 
 }

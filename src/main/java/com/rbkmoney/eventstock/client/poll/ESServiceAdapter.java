@@ -2,13 +2,12 @@ package com.rbkmoney.eventstock.client.poll;
 
 import com.rbkmoney.damsel.event_stock.*;
 import com.rbkmoney.damsel.event_stock.EventConstraint;
-import com.rbkmoney.damsel.event_stock.EventRange;
-import com.rbkmoney.damsel.payment_processing.NoLastEvent;
-import com.rbkmoney.thrift.filter.converter.TemporalConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+
+import static com.rbkmoney.eventstock.client.APIConversionUtil.convertConstraint;
 
 /**
  * Created by vpankrashkin on 29.06.16.
