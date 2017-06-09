@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -31,15 +32,22 @@ class PollingWorker implements Runnable {
     private final String subscriptionKey;
     private final Runnable task = () -> runPolling();
     private final WFlow wFlow = new WFlow();
+    private final HandlerListener<StockEvent> handlerListener;
     private RangeWalker<? extends Comparable, ? extends EventRange> rangeWalker;
     private boolean running = true;
     private boolean noEventsInit = false;
     private int pollingLimit;
 
-    public PollingWorker(Poller poller, PollingConfig<StockEvent> pollingConfig, ServiceAdapter<StockEvent, EventConstraint> serviceAdapter, String subscriptionKey) {
+    public PollingWorker(Poller poller, PollingConfig<StockEvent> pollingConfig, ServiceAdapter<StockEvent, EventConstraint> serviceAdapter, HandlerListener<StockEvent> handlerListener, String subscriptionKey) {
+        Objects.requireNonNull(poller, "Poller required");
         this.poller = poller;
+        Objects.requireNonNull(pollingConfig, "PollingConfig required");
         this.pollingConfig = pollingConfig;
+        Objects.requireNonNull(poller, "ServiceAdapter required");
         this.serviceAdapter = serviceAdapter;
+        Objects.requireNonNull(poller, "HandlerListener required");
+        this.handlerListener = handlerListener;
+        Objects.requireNonNull(poller, "SubscriptionKey required");
         this.subscriptionKey = subscriptionKey;
         this.pollingLimit = pollingConfig.getMaxQuerySize();
         if (pollingLimit <= 0) {
@@ -56,8 +64,8 @@ class PollingWorker implements Runnable {
         return pollingConfig;
     }
 
-    private boolean isWorking() {
-        return running && !Thread.currentThread().isInterrupted();
+    private boolean isWorking(Thread worker) {
+        return running && !worker.isInterrupted();
     }
 
     private boolean hasWorkingFlag(int flag) {
@@ -69,6 +77,9 @@ class PollingWorker implements Runnable {
             try {
                 LogSupport.setSubscriptionKey(subscriptionKey);
                 int completionFlag = WORKING;
+
+                Thread worker = Thread.currentThread();
+                int bindingId = handlerListener.bindId(worker);
 
                 try {
                     if (rangeWalker == null) {
@@ -82,7 +93,7 @@ class PollingWorker implements Runnable {
                         }
                     }
 
-                    while (hasWorkingFlag(completionFlag) && isWorking()) {
+                    while (hasWorkingFlag(completionFlag) && isWorking(worker)) {
                         if (rangeWalker.isRangeOver()) {
                             log.debug("Range is over: {}", rangeWalker);
                             completionFlag = RANGE_OVER;
@@ -95,7 +106,8 @@ class PollingWorker implements Runnable {
                         Collection<StockEvent> events = serviceAdapter.getEventRange(currentConstraint, pollingLimit);
 
                         StockEvent event = null;
-                        for (Iterator<StockEvent> it = events.iterator(); hasWorkingFlag(completionFlag) && it.hasNext();) {
+                        try {
+                        for (Iterator<StockEvent> it = events.iterator(); hasWorkingFlag(completionFlag) && it.hasNext(); ) {
                             event = it.next();
                             try {
                                 if (!pollingConfig.getEventFilter().accept(event)) {
@@ -104,7 +116,7 @@ class PollingWorker implements Runnable {
                                 }
                                 log.trace("Event accepted: {}", event);
 
-                                completionFlag = processEvent(event);
+                                completionFlag = processEvent(event, bindingId, worker);
                             } catch (Throwable t) {
                                 if (markIfInterrupted(t)) {
                                     log.error("Event handling was interrupted, [break]");
@@ -113,6 +125,9 @@ class PollingWorker implements Runnable {
                                     log.error("Error during handling event: [" + event + "]", t);
                                 }
                             }
+                        }
+                        } finally {
+                            handlerListener.unbindId(worker);
                         }
 
                         if (hasWorkingFlag(completionFlag)) {
@@ -155,6 +170,8 @@ class PollingWorker implements Runnable {
                             markIfInterrupted(t);
                         }
                     }
+                } finally {
+                    handlerListener.unbindId(worker);
                 }
 
                 switch (completionFlag) {
@@ -169,7 +186,6 @@ class PollingWorker implements Runnable {
                     default:
                         //do nothing
                 }
-
             } catch (Throwable t) {
                 log.error("Error during poll processing, task is broken", t);
                 if (!markIfInterrupted(t)) {
@@ -185,12 +201,23 @@ class PollingWorker implements Runnable {
         running = false;
     }
 
-    private int processEvent(StockEvent event) {
+    private int processEvent(StockEvent event, int bindingId, Thread worker) {
         int completionFlag = WORKING;
         EventHandler<StockEvent> eventHandler = pollingConfig.getEventHandler();
         handling:
-        while (isWorking()) {
-            EventAction eventAction = eventHandler.handle(event, subscriptionKey);
+        while (true) {
+            if (!isWorking(worker)) {
+                completionFlag = HANDLER_INTERRUPTION;
+                break;
+            }
+
+            EventAction eventAction;
+            handlerListener.beforeHandle(bindingId, event, subscriptionKey);
+            try {
+                eventAction = eventHandler.handle(event, subscriptionKey);
+            } finally {
+                handlerListener.afterHandle(bindingId, event, subscriptionKey);
+            }
             switch (eventAction) {
                 case RETRY:
                     log.info("Handler requested retry on event: {}", event);

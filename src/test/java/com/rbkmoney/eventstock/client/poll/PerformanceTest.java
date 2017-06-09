@@ -5,13 +5,18 @@ import com.rbkmoney.eventstock.client.*;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.Collection;
-import java.util.concurrent.CountDownLatch;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.rbkmoney.eventstock.client.poll.EventGenerator.createEvents;
-import static com.rbkmoney.eventstock.client.poll.EventGenerator.createStockEvent;
+import static java.lang.System.out;
 
 /**
  * Created by vpankrashkin on 07.06.17.
@@ -19,7 +24,7 @@ import static com.rbkmoney.eventstock.client.poll.EventGenerator.createStockEven
 @Ignore
 public class PerformanceTest {
     @Test
-    public void test() throws InterruptedException {
+    public void testHandling() throws InterruptedException {
         final long testCount = 1000000;
         final AtomicBoolean interrupted = new AtomicBoolean();
         final AtomicInteger prcCount = new AtomicInteger(0);
@@ -50,6 +55,7 @@ public class PerformanceTest {
                         return ErrorAction.INTERRUPT;
                 })
                 .withServiceAdapter(new EventGenerator.ServiceAdapterStub())
+                .withHandlerListener(new Housekeeper(1, 5000))
                 .withMaxQuerySize(1000)
                 .build();
         long startTime = System.currentTimeMillis();
@@ -60,7 +66,106 @@ public class PerformanceTest {
         ));
 
         latch.await();
-        System.out.printf("Count: %d, Time: %d\n", testCount, (System.currentTimeMillis() - startTime));
+        out.printf("Count: %d, Time: %d\n", testCount, (System.currentTimeMillis() - startTime));
+    }
+
+    static class Data {
+        long expireTime;
+        Object msg;
+    }
+    static class Stub {
+        Data freeObject = new Data();
+        Data usedObject = new Data();
+        final AtomicReference<Data> currObject = new AtomicReference<>(usedObject);
+    }
+
+    @Test
+    public void testSingleLock() {
+
+        try {
+            int threadsCount = 4;
+            int lockDepth = 1;
+            int iterations = 100_000_000;
+            Lock[] rLocks = new Lock[threadsCount];
+            Lock[] wLocks = new Lock[threadsCount];
+            Stub[] stubs = new Stub[threadsCount];
+
+            ReadWriteLock singleLock = new ReentrantReadWriteLock();
+            for (int i = 0; i < threadsCount; ++i) {
+                //ReadWriteLock lock = singleLock;
+                ReadWriteLock lock = new ReentrantReadWriteLock();
+                //rLocks[i] = lock.readLock();
+                rLocks[i] = new ReentrantLock();
+                wLocks[i] = rLocks[i];
+                //wLocks[i] = lock.writeLock();
+                stubs[i] = new Stub();
+            }
+            CyclicBarrier barrier = new CyclicBarrier(threadsCount+1);
+
+
+            ExecutorService executor = Executors.newFixedThreadPool(threadsCount+1);
+            for (int i = 0; i < threadsCount; ++i) {
+                executor.submit(createTask(iterations,lockDepth, stubs[i], rLocks[i], barrier));
+            }
+            executor.submit(() -> {
+                while (true) {
+                    long tmp;
+                    for (Stub stub :stubs) {
+                        synchronized (stub) {
+                            tmp = stub.usedObject.expireTime;
+                        }
+                    }
+                    Thread.sleep(100);
+                }
+            });
+
+            out.printf("!On barrier: %d, t: %s\n", barrier.getNumberWaiting(), Thread.currentThread().getName());
+
+            barrier.await();
+            long startTime = System.currentTimeMillis();
+            barrier.reset();
+            out.printf("Started at: %d", startTime);
+
+            barrier.await();
+            out.println("Finish Time: "+(System.currentTimeMillis() - startTime));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (BrokenBarrierException e) {
+            e.printStackTrace();
+        }
+    }
+
+    Runnable createTask(final int iterations, final int lCount, Stub stub, Lock lock, CyclicBarrier barrier) {
+        return () -> {
+            try {
+                out.printf("On barrier: %d, t: %s\n", barrier.getNumberWaiting(), Thread.currentThread().getName());
+                barrier.await();
+                int tmp = 0;
+                int tmp2 = 0;
+                for (int t = 0; t < iterations; ++t) {
+                    for (int j = 0; j < lCount; ++j) {
+                        //lock.lock();
+                        try {
+                            synchronized (stub) {
+
+                                tmp = j;
+                                ++tmp;
+                                tmp2 = tmp;
+                            }
+                            //stub.freeObject.expireTime = j;
+                            //stub.freeObject = stub.currObject.getAndSet(stub.freeObject);
+                        } finally {
+                           // lock.unlock();
+                        }
+                    }
+
+                }
+                barrier.await();
+                out.println("OUT"+tmp2);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        };
     }
 
 }

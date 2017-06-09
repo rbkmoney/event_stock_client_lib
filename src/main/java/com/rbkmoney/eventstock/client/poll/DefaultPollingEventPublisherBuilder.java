@@ -1,18 +1,17 @@
 package com.rbkmoney.eventstock.client.poll;
 
 import com.rbkmoney.damsel.event_stock.StockEvent;
-import com.rbkmoney.eventstock.client.ErrorAction;
-import com.rbkmoney.eventstock.client.ErrorHandler;
-import com.rbkmoney.eventstock.client.EventAction;
-import com.rbkmoney.eventstock.client.EventHandler;
+import com.rbkmoney.eventstock.client.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
 
 /**
  * Created by vpankrashkin on 29.06.16.
  */
 public class DefaultPollingEventPublisherBuilder {
-    protected static final EventHandler DEFAULT_EVENT_HANDLER =   new EventHandler() {
+    protected static final EventHandler DEFAULT_EVENT_HANDLER = new EventHandler() {
         private final Logger log = LoggerFactory.getLogger(this.getClass());
 
         @Override
@@ -42,16 +41,40 @@ public class DefaultPollingEventPublisherBuilder {
         }
     };
 
+    private static final HandlerListener DEFAULT_HANDLER_LISTENER = new HandlerListener() {
+        @Override
+        public void beforeHandle(int bindingId, Object event, String subsKey) {}
+
+        @Override
+        public void afterHandle(int bindingId, Object event, String subsKey) {}
+
+        @Override
+        public int bindId(Thread worker) {
+            return 0;
+        }
+
+        @Override
+        public void unbindId(Thread worker) {}
+
+        @Override
+        public void destroy() {}
+    };
     protected static final int DEFAULT_MAX_QUERY_SIZE = 100;
     protected static final int DEFAULT_MAX_POOL_SIZE = -1;
+
     protected static final int DEFAULT_MAX_POLL_DELAY = 1000;
 
     private EventHandler eventHandler;
     private ErrorHandler errorHandler;
     private ServiceAdapter serviceAdapter;
+    private HandlerListener handlerListener = DEFAULT_HANDLER_LISTENER;
     private int maxQuerySize = DEFAULT_MAX_QUERY_SIZE;
     private int maxPoolSize = DEFAULT_MAX_POOL_SIZE;
     private int pollDelay = DEFAULT_MAX_POLL_DELAY;
+
+    public HandlerListener getHandlerListener() {
+        return handlerListener;
+    }
 
     public EventHandler getEventHandler() {
         return eventHandler;
@@ -73,18 +96,20 @@ public class DefaultPollingEventPublisherBuilder {
         return pollDelay;
     }
 
+    public DefaultPollingEventPublisherBuilder withHandlerListener(HandlerListener handlerListener) {
+        Objects.requireNonNull(handlerListener, "Null handler listener");
+        this.handlerListener = handlerListener;
+        return this;
+    }
+
     public DefaultPollingEventPublisherBuilder withEventHandler(EventHandler eventHandler) {
-        if (eventHandler == null) {
-            throw new NullPointerException("Null event handler");
-        }
+        Objects.requireNonNull(eventHandler, "Null event handler");
         this.eventHandler = eventHandler;
         return this;
     }
 
     public DefaultPollingEventPublisherBuilder withErrorHandler(ErrorHandler errorHandler) {
-        if (errorHandler == null) {
-            throw new NullPointerException("Null event handler");
-        }
+        Objects.requireNonNull(errorHandler, "Null error event handler");
         this.errorHandler = errorHandler;
         return this;
     }
@@ -111,9 +136,7 @@ public class DefaultPollingEventPublisherBuilder {
     }
 
     public DefaultPollingEventPublisherBuilder withServiceAdapter(ServiceAdapter serviceAdapter) {
-        if (serviceAdapter == null) {
-            throw new IllegalArgumentException("ServiceAdapter cannot be null");
-        }
+        Objects.requireNonNull(serviceAdapter, "ServiceAdapter cannot be null");
         this.serviceAdapter = serviceAdapter;
         return this;
     }
@@ -129,7 +152,7 @@ public class DefaultPollingEventPublisherBuilder {
     public PollingEventPublisher<StockEvent> build() {
         ServiceAdapter adapter = getServiceAdapter();
         adapter = adapter == null ? createServiceAdapter() : serviceAdapter;
-        Poller poller = new Poller(adapter, getMaxPoolSize(), getPollDelay());
+        Poller poller = new Poller(adapter, getHandlerListener(), getMaxPoolSize(), getPollDelay());
         EventHandler eventHandler = getEventHandler();
         eventHandler = eventHandler == null ? DEFAULT_EVENT_HANDLER : eventHandler;
         ErrorHandler errorHandler = getErrorHandler();
