@@ -100,12 +100,16 @@ public class PerformanceTest {
                 //wLocks[i] = lock.writeLock();
                 stubs[i] = new Stub();
             }
-            CyclicBarrier barrier = new CyclicBarrier(threadsCount+1);
-
+            Phaser phaser = new Phaser(threadsCount +1) {
+                @Override
+                protected boolean onAdvance(int phase, int registeredParties) {
+                    return phase >=1 && super.onAdvance(phase, registeredParties);
+                }
+            };
 
             ExecutorService executor = Executors.newFixedThreadPool(threadsCount+1);
             for (int i = 0; i < threadsCount; ++i) {
-                executor.submit(createTask(iterations,lockDepth, stubs[i], rLocks[i], barrier));
+                executor.submit(createTask(iterations,lockDepth, stubs[i], rLocks[i], phaser));
             }
             executor.submit(() -> {
                 while (true) {
@@ -119,27 +123,24 @@ public class PerformanceTest {
                 }
             });
 
-            out.printf("!On barrier: %d, t: %s\n", barrier.getNumberWaiting(), Thread.currentThread().getName());
+            out.printf("!On barrier: %d, t: %s\n", phaser.getArrivedParties(), Thread.currentThread().getName());
 
-            barrier.await();
+            phaser.arriveAndAwaitAdvance();
             long startTime = System.currentTimeMillis();
-            barrier.reset();
-            out.printf("Started at: %d", startTime);
+            out.printf("Started at: %d\n", startTime);
 
-            barrier.await();
+            phaser.arriveAndAwaitAdvance();
             out.println("Finish Time: "+(System.currentTimeMillis() - startTime));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (BrokenBarrierException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    Runnable createTask(final int iterations, final int lCount, Stub stub, Lock lock, CyclicBarrier barrier) {
+    Runnable createTask(final int iterations, final int lCount, Stub stub, Lock lock, Phaser phaser) {
         return () -> {
             try {
-                out.printf("On barrier: %d, t: %s\n", barrier.getNumberWaiting(), Thread.currentThread().getName());
-                barrier.await();
+                out.printf("On barrier: %d, t: %s\n", phaser.getArrivedParties(), Thread.currentThread().getName());
+                phaser.arriveAndAwaitAdvance();
                 int tmp = 0;
                 int tmp2 = 0;
                 for (int t = 0; t < iterations; ++t) {
@@ -160,8 +161,8 @@ public class PerformanceTest {
                     }
 
                 }
-                barrier.await();
-                out.println("OUT"+tmp2);
+                out.println("Before OUT"+tmp2);
+                phaser.arriveAndAwaitAdvance();
             } catch (Exception e) {
                 e.printStackTrace();
             }

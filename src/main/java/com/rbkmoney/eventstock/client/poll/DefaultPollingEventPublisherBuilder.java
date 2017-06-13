@@ -60,19 +60,22 @@ public class DefaultPollingEventPublisherBuilder {
         public void destroy() {}
     };
     protected static final int DEFAULT_MAX_QUERY_SIZE = 100;
-    protected static final int DEFAULT_MAX_POOL_SIZE = -1;
+    protected static final int DEFAULT_MAX_POOL_SIZE = 1;
 
     protected static final int DEFAULT_MAX_POLL_DELAY = 1000;
 
     private EventHandler eventHandler;
     private ErrorHandler errorHandler;
     private ServiceAdapter serviceAdapter;
-    private HandlerListener handlerListener = DEFAULT_HANDLER_LISTENER;
+    private HandlerListener handlerListener;
     private int maxQuerySize = DEFAULT_MAX_QUERY_SIZE;
     private int maxPoolSize = DEFAULT_MAX_POOL_SIZE;
     private int pollDelay = DEFAULT_MAX_POLL_DELAY;
 
     public HandlerListener getHandlerListener() {
+        if (handlerListener == null) {
+            handlerListener = createHandlerListener();
+        }
         return handlerListener;
     }
 
@@ -142,7 +145,14 @@ public class DefaultPollingEventPublisherBuilder {
     }
 
     public ServiceAdapter getServiceAdapter() {
+        if (serviceAdapter == null) {
+            serviceAdapter = createServiceAdapter();
+        }
         return serviceAdapter;
+    }
+
+    protected HandlerListener createHandlerListener() {
+        return DEFAULT_HANDLER_LISTENER;
     }
 
     protected ServiceAdapter createServiceAdapter() {
@@ -151,7 +161,6 @@ public class DefaultPollingEventPublisherBuilder {
 
     public PollingEventPublisher<StockEvent> build() {
         ServiceAdapter adapter = getServiceAdapter();
-        adapter = adapter == null ? createServiceAdapter() : serviceAdapter;
         Poller poller = new Poller(adapter, getHandlerListener(), getMaxPoolSize(), getPollDelay());
         EventHandler eventHandler = getEventHandler();
         eventHandler = eventHandler == null ? DEFAULT_EVENT_HANDLER : eventHandler;

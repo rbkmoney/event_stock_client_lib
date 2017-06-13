@@ -10,7 +10,7 @@ public interface HandlerListener<EType> {
     void unbindId(Thread worker);
     void destroy();
 
-    interface ListenerEventConsumer<E> {
+    interface EventConsumer<E> {
         void consume(E event);
     }
 }

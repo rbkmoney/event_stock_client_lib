@@ -17,7 +17,7 @@ public class Housekeeper<T extends Object> implements HandlerListener<T> {
     private final WorkerState[] states;
     private final ConcurrentHashMap<Thread, Integer> workerMapping;
     private final long timeout;
-    private final HandlerListener.ListenerEventConsumer<TimeoutData<T>> eventConsumer;
+    private final EventConsumer<TimeoutEvent<T>> eventConsumer;
     private final Thread runnerThread;
     private volatile boolean running = true;
 
@@ -33,8 +33,8 @@ public class Housekeeper<T extends Object> implements HandlerListener<T> {
         );
     }
 
-    public Housekeeper(HandlerListener.ListenerEventConsumer<TimeoutData<T>> eventConsumer, int parallelism, long timeout) {
-        Objects.requireNonNull(eventConsumer, "ListenerEventConsumer is null");
+    public Housekeeper(EventConsumer<TimeoutEvent<T>> eventConsumer, int parallelism, long timeout) {
+        Objects.requireNonNull(eventConsumer, "EventConsumer is null");
         this.eventConsumer = eventConsumer;
         this.parallelism = parallelism;
         if (timeout == Long.MAX_VALUE || timeout <= 0) {
@@ -56,8 +56,14 @@ public class Housekeeper<T extends Object> implements HandlerListener<T> {
 
     private void run() {
         try {
+            long prevTime = -1;
             while (running && !Thread.currentThread().isInterrupted()) {
-                long pause = wakeup();
+                long time = System.currentTimeMillis();
+                if (prevTime > 0 && time - prevTime > timeout * 1.5) {
+                    log.warn("Monitor thread starvation, wakeup period hasn't been observed");
+                }
+                prevTime = time;
+                long pause = wakeup(time);
                 Thread.sleep(pause);
             }
         } catch (InterruptedException e) {
@@ -65,11 +71,10 @@ public class Housekeeper<T extends Object> implements HandlerListener<T> {
         }
     }
 
-    private long wakeup() {
-        long time = System.currentTimeMillis();
+    private long wakeup(long time) {
         WorkerState state;
         long nextTimeout = Long.MAX_VALUE;
-        TimeoutData[] dataArr = new TimeoutData[parallelism];
+        TimeoutEvent[] dataArr = new TimeoutEvent[parallelism];
         int notifyCount = 0;
         for (int i = 0; i < parallelism; ++i) {
             state = states[i];
@@ -79,7 +84,7 @@ public class Housekeeper<T extends Object> implements HandlerListener<T> {
                     if (diff >= 0) {
                         nextTimeout = nextTimeout < diff ? nextTimeout : diff;
                     } else {
-                        dataArr[notifyCount++] = new TimeoutData(state.subsKey, state.data, timeout - diff);
+                        dataArr[notifyCount++] = new TimeoutEvent(state.subsKey, state.data, timeout - diff);
                     }
                 }
             }
@@ -88,7 +93,7 @@ public class Housekeeper<T extends Object> implements HandlerListener<T> {
             try {
                 eventConsumer.consume(dataArr[i]);
             } catch (Throwable t) {
-                log.error("ListenerEventConsumer failed at: {}", dataArr[i], t);
+                log.error("EventConsumer failed at: {}", dataArr[i], t);
 
             }
         }
@@ -157,12 +162,12 @@ public class Housekeeper<T extends Object> implements HandlerListener<T> {
         runnerThread.interrupt();
     }
 
-    public static class TimeoutData<T> {
+    public static class TimeoutEvent<T> {
         private final String subscriptionKey;
         private final T data;
         private final long totalTime;
 
-        public TimeoutData(String subscriptionKey, T data, long totalTime) {
+        public TimeoutEvent(String subscriptionKey, T data, long totalTime) {
             this.subscriptionKey = subscriptionKey;
             this.data = data;
             this.totalTime = totalTime;
@@ -182,7 +187,7 @@ public class Housekeeper<T extends Object> implements HandlerListener<T> {
 
         @Override
         public String toString() {
-            return "TimeoutData{" +
+            return "TimeoutEvent{" +
                     "subscriptionKey='" + subscriptionKey + '\'' +
                     ", data=" + data +
                     ", totalTime=" + totalTime +

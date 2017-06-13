@@ -2,13 +2,18 @@ package com.rbkmoney.eventstock.client.poll;
 
 import com.rbkmoney.damsel.event_stock.StockEvent;
 import com.rbkmoney.eventstock.client.*;
+import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static java.lang.System.out;
+import static org.hamcrest.Matchers.is;
 
 /**
  * Created by vpankrashkin on 09.06.17.
@@ -16,7 +21,13 @@ import static java.lang.System.out;
 public class HandlerListenerTest {
     @Test
     public void testHandling() throws InterruptedException {
-        final long testCount = 1000000;
+        int threadsCount = 4;
+        int handlerTimeout = 200;
+        int hangingPeriod = 2000;
+        List<Housekeeper.TimeoutEvent> timeoutEvents = new ArrayList<>();
+        List<StockEvent> expectedTimeoutData = new ArrayList<>();
+        long testCount = 6000;
+
         final AtomicBoolean interrupted = new AtomicBoolean();
         final AtomicInteger prcCount = new AtomicInteger(0);
         final CountDownLatch latch = new CountDownLatch(1);
@@ -25,7 +36,14 @@ public class HandlerListenerTest {
                         new EventHandler<StockEvent>() {
                             @Override
                             public EventAction handle(StockEvent event, String subsKey) {
-                                prcCount.incrementAndGet();
+                                int count = prcCount.incrementAndGet();
+                                if (count % hangingPeriod == 0)
+                                    try {
+                                    expectedTimeoutData.add(event);
+                                        Thread.sleep((long) (handlerTimeout * 2.5));
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
                                 return EventAction.CONTINUE;
                             }
 
@@ -46,7 +64,15 @@ public class HandlerListenerTest {
                     return ErrorAction.INTERRUPT;
                 })
                 .withServiceAdapter(new EventGenerator.ServiceAdapterStub())
-                .withMaxQuerySize(1000)
+                .withMaxPoolSize(threadsCount)
+                .withHandlerListener(
+                        new Housekeeper(
+                                (HandlerListener.EventConsumer<Housekeeper.TimeoutEvent>) timeoutEvent ->
+                                        timeoutEvents.add(timeoutEvent)
+                                ,
+                                threadsCount,
+                                handlerTimeout)
+                )
                 .build();
         long startTime = System.currentTimeMillis();
         publisher.subscribe(new DefaultSubscriberConfig<>(
@@ -57,6 +83,10 @@ public class HandlerListenerTest {
 
         latch.await();
         out.printf("Count: %d, Time: %d\n", testCount, (System.currentTimeMillis() - startTime));
+        List timeoutData = timeoutEvents.stream().map(e -> e.getData()).collect(Collectors.toList());
+        List uniqTimeoutEvents = (List) timeoutData.stream().distinct().collect(Collectors.toList());
+        Assert.assertTrue(timeoutEvents.size() > uniqTimeoutEvents.size());
+        Assert.assertThat(expectedTimeoutData, is(uniqTimeoutEvents));
     }
 
 }
