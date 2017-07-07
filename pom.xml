@@ -32,11 +32,6 @@
             <version>0.5.0</version>
         </dependency>
         <dependency>
-            <groupId>com.rbkmoney.geck</groupId>
-            <artifactId>serializer</artifactId>
-            <version>0.5.0</version>
-        </dependency>
-        <dependency>
             <groupId>com.rbkmoney</groupId>
             <artifactId>damsel</artifactId>
             <version>1.185-25f72ed-epic</version>
@@ -49,6 +44,12 @@
             <version>1.7.21</version>
         </dependency>
         <!--Test libs-->
+        <dependency>
+            <groupId>com.rbkmoney.geck</groupId>
+            <artifactId>serializer</artifactId>
+            <version>0.5.0</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
