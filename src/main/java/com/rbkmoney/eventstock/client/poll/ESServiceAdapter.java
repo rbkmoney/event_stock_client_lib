@@ -3,6 +3,7 @@ package com.rbkmoney.eventstock.client.poll;
 import com.rbkmoney.damsel.event_stock.*;
 import com.rbkmoney.damsel.event_stock.EventConstraint;
 import com.rbkmoney.geck.common.util.TypeUtil;
+import com.rbkmoney.woody.api.ClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +15,10 @@ import java.util.Collection;
 class ESServiceAdapter implements ServiceAdapter<StockEvent, com.rbkmoney.eventstock.client.EventConstraint> {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final EventRepositorySrv.Iface repository;
+
+    public static ESServiceAdapter build(ClientBuilder clientBuilder) {
+        return new ESServiceAdapter(clientBuilder.build(EventRepositorySrv.Iface.class));
+    }
 
     public ESServiceAdapter(EventRepositorySrv.Iface repository) {
         this.repository = repository;
