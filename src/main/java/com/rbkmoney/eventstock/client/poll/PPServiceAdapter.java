@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 /**
  * Created by vpankrashkin on 29.06.16.
  */
-class PPServiceAdapter implements ServiceAdapter<StockEvent, com.rbkmoney.eventstock.client.EventConstraint> {
+public class PPServiceAdapter implements ServiceAdapter<StockEvent, com.rbkmoney.eventstock.client.EventConstraint> {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final EventSinkSrv.Iface repository;
 
@@ -97,6 +97,7 @@ class PPServiceAdapter implements ServiceAdapter<StockEvent, com.rbkmoney.events
         if (scrConstraint.getIdRange() != null) {
             EventRange range = convertRange(scrConstraint.getIdRange());
             range.setLimit(limit);
+            return range;
         } else if (scrConstraint.getTimeRange() != null) {
             throw new UnsupportedByServiceException("Time range is not supported by PP interface");
         }
