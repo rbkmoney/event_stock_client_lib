@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 /**
  * Created by vpankrashkin on 12.07.16.
  */
-class PollingWorker implements Runnable {
+class PollingWorker<TEvent> implements Runnable {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private static final int WORKING = 0;
@@ -27,18 +27,18 @@ class PollingWorker implements Runnable {
     private static final int HANDLER_INTERRUPTION = 3;
 
     private final Poller poller;
-    private final PollingConfig<StockEvent> pollingConfig;
-    private final ServiceAdapter<StockEvent, EventConstraint> serviceAdapter;
+    private final PollingConfig<TEvent> pollingConfig;
+    private final ServiceAdapter<TEvent, EventConstraint> serviceAdapter;
     private final String subscriptionKey;
     private final Runnable task = () -> runPolling();
     private final WFlow wFlow = new WFlow();
-    private final HandlerListener<StockEvent> handlerListener;
+    private final HandlerListener<TEvent> handlerListener;
     private RangeWalker<? extends Comparable, ? extends EventRange> rangeWalker;
     private boolean running = true;
     private boolean noEventsInit = false;
     private int pollingLimit;
 
-    public PollingWorker(Poller poller, PollingConfig<StockEvent> pollingConfig, ServiceAdapter<StockEvent, EventConstraint> serviceAdapter, HandlerListener<StockEvent> handlerListener, String subscriptionKey) {
+    public PollingWorker(Poller poller, PollingConfig<TEvent> pollingConfig, ServiceAdapter<TEvent, EventConstraint> serviceAdapter, HandlerListener<TEvent> handlerListener, String subscriptionKey) {
         Objects.requireNonNull(poller, "Poller required");
         this.poller = poller;
         Objects.requireNonNull(pollingConfig, "PollingConfig required");
@@ -60,7 +60,7 @@ class PollingWorker implements Runnable {
         task.run();
     }
 
-    public PollingConfig<StockEvent> getPollingConfig() {
+    public PollingConfig<TEvent> getPollingConfig() {
         return pollingConfig;
     }
 
@@ -103,11 +103,11 @@ class PollingWorker implements Runnable {
                         EventConstraint currentConstraint = new EventConstraint(rangeWalker.getWalkingRange());
 
                         log.debug("Tying to get event range, constraint: {}, limit: {}", currentConstraint, pollingLimit);
-                        Collection<StockEvent> events = serviceAdapter.getEventRange(currentConstraint, pollingLimit);
+                        Collection<TEvent> events = serviceAdapter.getEventRange(currentConstraint, pollingLimit);
 
-                        StockEvent event = null;
+                        TEvent event = null;
                         try {
-                        for (Iterator<StockEvent> it = events.iterator(); hasWorkingFlag(completionFlag) && it.hasNext(); ) {
+                        for (Iterator<TEvent> it = events.iterator(); hasWorkingFlag(completionFlag) && it.hasNext(); ) {
                             event = it.next();
                             try {
                                 if (!pollingConfig.getEventFilter().accept(event)) {
@@ -204,9 +204,9 @@ class PollingWorker implements Runnable {
         running = false;
     }
 
-    private int processEvent(StockEvent event, int bindingId, Thread worker) throws Exception {
+    private int processEvent(TEvent event, int bindingId, Thread worker) throws Exception {
         int completionFlag = WORKING;
-        EventHandler<StockEvent> eventHandler = pollingConfig.getEventHandler();
+        EventHandler<TEvent> eventHandler = pollingConfig.getEventHandler();
         handling:
         while (true) {
             if (!isWorking(worker)) {
@@ -242,7 +242,7 @@ class PollingWorker implements Runnable {
         return completionFlag;
     }
 
-    private void moveRange(final StockEvent lastEvent) {
+    private void moveRange(final TEvent lastEvent) {
         rangeWalker.moveRange((walker, boundInclusive) -> {
             Comparable val;
             if (walker instanceof IdRangeWalker) {
@@ -265,13 +265,13 @@ class PollingWorker implements Runnable {
         }
     }
 
-    private <T extends Comparable, R extends EventRange, RW extends RangeWalker> RW initRange(R range, Function<R, RW> walkerCreator, Function<StockEvent, T> valExtractor, Supplier<R> emptyRangeSupplier) throws ServiceException {
+    private <T extends Comparable, R extends EventRange, RW extends RangeWalker> RW initRange(R range, Function<R, RW> walkerCreator, Function<TEvent, T> valExtractor, Supplier<R> emptyRangeSupplier) throws ServiceException {
         log.debug("Trying to initialize range base on: {}", range);
         RW rangeWalker;
         if (range.isFromDefined()) {
             rangeWalker = walkerCreator.apply(range);
         } else {
-            StockEvent event = !noEventsInit && range.isFromNow() ? serviceAdapter.getLastEvent() : serviceAdapter.getFirstEvent();
+            TEvent event = !noEventsInit && range.isFromNow() ? serviceAdapter.getLastEvent() : serviceAdapter.getFirstEvent();
             if (event == null) {
                 log.trace("No events in stock");
                 noEventsInit = true;
