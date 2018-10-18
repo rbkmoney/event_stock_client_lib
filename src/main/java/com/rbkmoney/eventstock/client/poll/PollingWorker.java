@@ -1,7 +1,6 @@
 package com.rbkmoney.eventstock.client.poll;
 
 import com.rbkmoney.damsel.event_stock.DatasetTooBig;
-import com.rbkmoney.damsel.event_stock.StockEvent;
 import com.rbkmoney.eventstock.client.*;
 import com.rbkmoney.woody.api.flow.WFlow;
 import org.slf4j.Logger;
@@ -107,25 +106,25 @@ class PollingWorker<TEvent> implements Runnable {
 
                         TEvent event = null;
                         try {
-                        for (Iterator<TEvent> it = events.iterator(); hasWorkingFlag(completionFlag) && it.hasNext(); ) {
-                            event = it.next();
-                            try {
-                                if (!pollingConfig.getEventFilter().accept(event)) {
-                                    log.trace("Event not accepted: {}", event);
-                                    continue;
-                                }
-                                log.trace("Event accepted: {}", event);
+                            for (Iterator<TEvent> it = events.iterator(); hasWorkingFlag(completionFlag) && it.hasNext(); ) {
+                                event = it.next();
+                                try {
+                                    if (!pollingConfig.getEventFilter().accept(event)) {
+                                        log.trace("Event not accepted: {}", event);
+                                        continue;
+                                    }
+                                    log.trace("Event accepted: {}", event);
 
-                                completionFlag = processEvent(event, bindingId, worker);
-                            } catch (Throwable t) {
-                                if (markIfInterrupted(t)) {
-                                    log.error("Event handling was interrupted, [break]");
-                                    break;
-                                } else {
-                                    log.warn("Error during handling event: [" + event + "]", t);
+                                    completionFlag = processEvent(event, bindingId, worker);
+                                } catch (Throwable t) {
+                                    if (markIfInterrupted(t)) {
+                                        log.error("Event handling was interrupted, [break]");
+                                        break;
+                                    } else {
+                                        log.warn("Error during handling event: [" + event + "]", t);
+                                    }
                                 }
                             }
-                        }
                         } finally {
                             handlerListener.unbindId(worker);
                         }
