@@ -108,7 +108,7 @@ class PollingWorker<TEvent> implements Runnable {
                             for (Iterator<TEvent> it = events.iterator(); hasWorkingFlag(completionFlag) && it.hasNext(); ) {
                                 event = it.next();
                                 try {
-                                    if (!pollingConfig.getEventFilter().accept(serviceAdapter.getEventId(event), serviceAdapter.getCreatedAt(event), event)) {
+                                    if (!pollingConfig.getEventFilter().accept(serviceAdapter.getEventId(event), serviceAdapter.getEventCreatedAt(event), event)) {
                                         log.trace("Event not accepted: {}", event);
                                         continue;
                                     }
@@ -241,7 +241,7 @@ class PollingWorker<TEvent> implements Runnable {
             if (walker instanceof IdRangeWalker) {
                 val = serviceAdapter.getEventId(lastEvent);
             } else {
-                val = Instant.from(serviceAdapter.getCreatedAt(lastEvent));
+                val = Instant.from(serviceAdapter.getEventCreatedAt(lastEvent));
             }
             return new AbstractMap.SimpleEntry(val, false);
         });
@@ -254,7 +254,7 @@ class PollingWorker<TEvent> implements Runnable {
             return initRange(idRange, IdRangeWalker::new, serviceAdapter::getEventId, () -> new EventConstraint.EventIDRange(1L, 0L));
         } else {
             EventConstraint.EventTimeRange timeRange = constraint.getTimeRange();
-            return initRange(timeRange, TimeRangeWalker::new, (event) -> Instant.from(serviceAdapter.getCreatedAt(event)), () -> new EventConstraint.EventTimeRange(Instant.MAX, Instant.MIN));
+            return initRange(timeRange, TimeRangeWalker::new, (event) -> Instant.from(serviceAdapter.getEventCreatedAt(event)), () -> new EventConstraint.EventTimeRange(Instant.MAX, Instant.MIN));
         }
     }
 

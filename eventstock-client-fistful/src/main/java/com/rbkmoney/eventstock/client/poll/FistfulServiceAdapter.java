@@ -160,7 +160,7 @@ public class FistfulServiceAdapter<TEvent> implements ServiceAdapter<TEvent, Eve
     }
 
     @Override
-    public TemporalAccessor getCreatedAt(TEvent event) {
+    public TemporalAccessor getEventCreatedAt(TEvent event) {
         return repository.getCreatedAt(event);
     }
 

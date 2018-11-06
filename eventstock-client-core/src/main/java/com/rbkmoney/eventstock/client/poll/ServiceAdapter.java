@@ -11,5 +11,5 @@ public interface ServiceAdapter<TEvent, TRange> {
     TEvent getFirstEvent() throws ServiceException;
     TEvent getLastEvent() throws ServiceException;
     Long getEventId(TEvent event);
-    TemporalAccessor getCreatedAt(TEvent event);
+    TemporalAccessor getEventCreatedAt(TEvent event);
 }

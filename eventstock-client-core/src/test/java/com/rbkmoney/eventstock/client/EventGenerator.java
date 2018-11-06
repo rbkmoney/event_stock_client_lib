@@ -61,7 +61,7 @@ public class EventGenerator {
         }
 
         @Override
-        public TemporalAccessor getCreatedAt(SinkEvent sinkEvent) {
+        public TemporalAccessor getEventCreatedAt(SinkEvent sinkEvent) {
             return TypeUtil.stringToTemporal(sinkEvent.getCreatedAt());
         }
     }

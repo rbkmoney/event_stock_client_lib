@@ -94,7 +94,7 @@ public class PPServiceAdapter implements ServiceAdapter<StockEvent, com.rbkmoney
     }
 
     @Override
-    public TemporalAccessor getCreatedAt(StockEvent stockEvent) {
+    public TemporalAccessor getEventCreatedAt(StockEvent stockEvent) {
         return TypeUtil.stringToTemporal(stockEvent.getSourceEvent().getProcessingEvent().getCreatedAt());
     }
 

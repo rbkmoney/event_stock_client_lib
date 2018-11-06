@@ -77,7 +77,7 @@ public class ESServiceAdapter implements ServiceAdapter<StockEvent, com.rbkmoney
     }
 
     @Override
-    public TemporalAccessor getCreatedAt(StockEvent stockEvent) {
+    public TemporalAccessor getEventCreatedAt(StockEvent stockEvent) {
         String time = null;
         if (stockEvent.getSourceEvent().isSetProcessingEvent()) {
             time = stockEvent.getSourceEvent().getProcessingEvent().getCreatedAt();
