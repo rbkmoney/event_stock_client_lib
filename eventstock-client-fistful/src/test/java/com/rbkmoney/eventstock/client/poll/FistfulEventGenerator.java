@@ -14,10 +14,11 @@ public class FistfulEventGenerator {
     public static com.rbkmoney.fistful.withdrawal.SinkEvent createWithdrawalEvent(long id) {
         String timeString = TypeUtil.temporalToString(Instant.now());
         com.rbkmoney.fistful.withdrawal.SinkEvent sinkEvent = new com.rbkmoney.fistful.withdrawal.SinkEvent();
+        sinkEvent.setId(id);
         sinkEvent.setCreatedAt(timeString);
         sinkEvent.setPayload(
                 new com.rbkmoney.fistful.withdrawal.Event(
-                        id,
+                        1,
                         timeString,
                         Arrays.asList(
                                 com.rbkmoney.fistful.withdrawal.Change.created(new com.rbkmoney.fistful.withdrawal.Withdrawal())
@@ -35,10 +36,11 @@ public class FistfulEventGenerator {
     public static com.rbkmoney.fistful.identity.SinkEvent createIdentityEvent(long id) {
         String timeString = TypeUtil.temporalToString(Instant.now());
         com.rbkmoney.fistful.identity.SinkEvent sinkEvent = new com.rbkmoney.fistful.identity.SinkEvent();
+        sinkEvent.setId(id);
         sinkEvent.setCreatedAt(timeString);
         sinkEvent.setPayload(
                 new com.rbkmoney.fistful.identity.Event(
-                        id,
+                        1,
                         timeString,
                         Arrays.asList(
                                 com.rbkmoney.fistful.identity.Change.created(new com.rbkmoney.fistful.identity.Identity())
@@ -56,10 +58,11 @@ public class FistfulEventGenerator {
     public static com.rbkmoney.fistful.wallet.SinkEvent createWalletEvent(long id) {
         String timeString = TypeUtil.temporalToString(Instant.now());
         com.rbkmoney.fistful.wallet.SinkEvent sinkEvent = new com.rbkmoney.fistful.wallet.SinkEvent();
+        sinkEvent.setId(id);
         sinkEvent.setCreatedAt(timeString);
         sinkEvent.setPayload(
                 new com.rbkmoney.fistful.wallet.Event(
-                        id,
+                        1,
                         timeString,
                         Arrays.asList(
                                 com.rbkmoney.fistful.wallet.Change.created(new com.rbkmoney.fistful.wallet.Wallet())

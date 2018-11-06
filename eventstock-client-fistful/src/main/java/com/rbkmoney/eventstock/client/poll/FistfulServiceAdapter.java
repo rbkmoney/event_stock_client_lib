@@ -34,7 +34,7 @@ public class FistfulServiceAdapter<TEvent> implements ServiceAdapter<TEvent, Eve
 
             @Override
             public Long getEventId(SinkEvent sinkEvent) {
-                return sinkEvent.getPayload().getId();
+                return sinkEvent.getId();
             }
 
             @Override
@@ -59,7 +59,7 @@ public class FistfulServiceAdapter<TEvent> implements ServiceAdapter<TEvent, Eve
 
             @Override
             public Long getEventId(com.rbkmoney.fistful.identity.SinkEvent sinkEvent) {
-                return sinkEvent.getPayload().getId();
+                return sinkEvent.getId();
             }
 
             @Override
@@ -84,7 +84,7 @@ public class FistfulServiceAdapter<TEvent> implements ServiceAdapter<TEvent, Eve
 
             @Override
             public Long getEventId(com.rbkmoney.fistful.wallet.SinkEvent sinkEvent) {
-                return sinkEvent.getPayload().getId();
+                return sinkEvent.getId();
             }
 
             @Override

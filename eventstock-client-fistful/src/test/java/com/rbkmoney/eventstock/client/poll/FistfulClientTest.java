@@ -75,7 +75,7 @@ public class FistfulClientTest extends AbstractTest {
                 return true;
             }
         }, (e, k) -> {
-            lastId.set(e.getPayload().getId());
+            lastId.set(e.getId());
             return EventAction.CONTINUE;
         });
 
@@ -135,7 +135,7 @@ public class FistfulClientTest extends AbstractTest {
                 return true;
             }
         }, (e, k) -> {
-            lastId.set(e.getPayload().getId());
+            lastId.set(e.getId());
             return EventAction.CONTINUE;
         });
 
@@ -195,7 +195,7 @@ public class FistfulClientTest extends AbstractTest {
                 return true;
             }
         }, (e, k) -> {
-            lastId.set(e.getPayload().getId());
+            lastId.set(e.getId());
             return EventAction.CONTINUE;
         });
 
