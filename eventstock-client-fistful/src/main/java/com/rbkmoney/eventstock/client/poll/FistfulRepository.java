@@ -15,6 +15,6 @@ public interface FistfulRepository<TEvent> {
 
     Long getEventId(TEvent tEvent);
 
-    TemporalAccessor getCreatedAt(TEvent tEvent);
+    TemporalAccessor getEventCreatedAt(TEvent tEvent);
 
 }

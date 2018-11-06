@@ -38,7 +38,7 @@ public class FistfulServiceAdapter<TEvent> implements ServiceAdapter<TEvent, Eve
             }
 
             @Override
-            public TemporalAccessor getCreatedAt(SinkEvent sinkEvent) {
+            public TemporalAccessor getEventCreatedAt(SinkEvent sinkEvent) {
                 return TypeUtil.stringToTemporal(sinkEvent.getCreatedAt());
             }
         });
@@ -63,7 +63,7 @@ public class FistfulServiceAdapter<TEvent> implements ServiceAdapter<TEvent, Eve
             }
 
             @Override
-            public TemporalAccessor getCreatedAt(com.rbkmoney.fistful.identity.SinkEvent sinkEvent) {
+            public TemporalAccessor getEventCreatedAt(com.rbkmoney.fistful.identity.SinkEvent sinkEvent) {
                 return TypeUtil.stringToTemporal(sinkEvent.getCreatedAt());
             }
         });
@@ -88,7 +88,7 @@ public class FistfulServiceAdapter<TEvent> implements ServiceAdapter<TEvent, Eve
             }
 
             @Override
-            public TemporalAccessor getCreatedAt(com.rbkmoney.fistful.wallet.SinkEvent sinkEvent) {
+            public TemporalAccessor getEventCreatedAt(com.rbkmoney.fistful.wallet.SinkEvent sinkEvent) {
                 return TypeUtil.stringToTemporal(sinkEvent.getCreatedAt());
             }
         });
@@ -161,7 +161,7 @@ public class FistfulServiceAdapter<TEvent> implements ServiceAdapter<TEvent, Eve
 
     @Override
     public TemporalAccessor getEventCreatedAt(TEvent event) {
-        return repository.getCreatedAt(event);
+        return repository.getEventCreatedAt(event);
     }
 
     public static EventRange convertConstraint(EventConstraint scrConstraint, int limit) throws UnsupportedByServiceException {
