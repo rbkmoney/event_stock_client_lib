@@ -24,10 +24,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class XratesClientTest extends AbstractTest {
+public class RatesClientTest extends AbstractTest {
 
     @Test
-    public void testXratesServiceAdapter() throws URISyntaxException, InterruptedException {
+    public void testRatesServiceAdapter() throws URISyntaxException, InterruptedException {
         Semaphore semaphore = new Semaphore(-1);
         AtomicLong lastId = new AtomicLong(-1);
 
@@ -37,10 +37,10 @@ public class XratesClientTest extends AbstractTest {
                 null
         );
 
-        addServlet(srv, "/xrates");
+        addServlet(srv, "/rates");
 
-        PollingEventPublisher publisher = new XratesPollingEventPublisherBuilder()
-                .withURI(new URI(getUrlString("/xrates")))
+        PollingEventPublisher publisher = new RatesPollingEventPublisherBuilder()
+                .withURI(new URI(getUrlString("/rates")))
                 .build();
 
         DefaultSubscriberConfig config = new DefaultSubscriberConfig<>(
@@ -64,7 +64,7 @@ public class XratesClientTest extends AbstractTest {
             public List<SinkEvent> getEvents(EventRange eventRange) throws TException {
                 if (eventRange.getAfter() == -1) {
                     return IntStream.range(0, 3)
-                            .mapToObj(XratesEventGenerator::createXratesEvent)
+                            .mapToObj(RatesEventGenerator::createRatesEvent)
                             .collect(Collectors.toList());
                 } else {
                     semaphore.release(1);

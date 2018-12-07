@@ -12,9 +12,9 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Arrays;
 
-public class XratesEventGenerator {
+public class RatesEventGenerator {
 
-    public static SinkEvent createXratesEvent(long id) {
+    public static SinkEvent createRatesEvent(long id) {
         String timeString = TypeUtil.temporalToString(Instant.now());
         SinkEvent sinkEvent = new SinkEvent();
         sinkEvent.setId(id);

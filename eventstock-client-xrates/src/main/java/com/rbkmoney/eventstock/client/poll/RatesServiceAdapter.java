@@ -14,15 +14,15 @@ import java.util.Collection;
 import java.util.List;
 
 @Slf4j
-public class XratesServiceAdapter implements ServiceAdapter<SinkEvent, EventConstraint> {
+public class RatesServiceAdapter implements ServiceAdapter<SinkEvent, EventConstraint> {
 
     private EventSinkSrv.Iface repository;
 
-    public static XratesServiceAdapter build(ClientBuilder clientBuilder) {
-        return new XratesServiceAdapter(clientBuilder.build(EventSinkSrv.Iface.class));
+    public static RatesServiceAdapter build(ClientBuilder clientBuilder) {
+        return new RatesServiceAdapter(clientBuilder.build(EventSinkSrv.Iface.class));
     }
 
-    private XratesServiceAdapter(EventSinkSrv.Iface repository) {
+    private RatesServiceAdapter(EventSinkSrv.Iface repository) {
         this.repository = repository;
     }
 

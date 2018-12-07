@@ -11,7 +11,7 @@
     </parent>
 
     <groupId>com.rbkmoney</groupId>
-    <artifactId>eventstock-client-xrates</artifactId>
+    <artifactId>eventstock-client-rates</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
