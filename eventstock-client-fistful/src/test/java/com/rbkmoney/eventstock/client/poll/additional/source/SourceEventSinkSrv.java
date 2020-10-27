@@ -1,10 +1,7 @@
 package com.rbkmoney.eventstock.client.poll.additional.source;
 
 import com.rbkmoney.fistful.eventsink.EventRange;
-import com.rbkmoney.fistful.source.Change;
-import com.rbkmoney.fistful.source.Event;
-import com.rbkmoney.fistful.source.SinkEvent;
-import com.rbkmoney.fistful.source.Source;
+import com.rbkmoney.fistful.source.*;
 import com.rbkmoney.geck.common.util.TypeUtil;
 import com.rbkmoney.geck.serializer.kit.mock.MockMode;
 import com.rbkmoney.geck.serializer.kit.mock.MockTBaseProcessor;
@@ -42,7 +39,7 @@ public class SourceEventSinkSrv implements com.rbkmoney.fistful.source.EventSink
         SinkEvent sinkEvent = new SinkEvent();
         sinkEvent.setId(id);
         sinkEvent.setCreatedAt(timeString);
-        sinkEvent.setPayload(new Event(1, timeString, Arrays.asList(Change.created(new Source()))));
+        sinkEvent.setPayload(new EventSinkPayload(1, timeString, Arrays.asList(Change.created(new Source()))));
         try {
             TBaseHandler<SinkEvent> handler = new TBaseHandler<>(SinkEvent.class);
             return new MockTBaseProcessor(MockMode.REQUIRED_ONLY).process(sinkEvent, handler);

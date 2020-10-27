@@ -1,9 +1,6 @@
 package com.rbkmoney.eventstock.client.poll.additional.deposit;
 
-import com.rbkmoney.fistful.deposit.Change;
-import com.rbkmoney.fistful.deposit.Deposit;
-import com.rbkmoney.fistful.deposit.Event;
-import com.rbkmoney.fistful.deposit.SinkEvent;
+import com.rbkmoney.fistful.deposit.*;
 import com.rbkmoney.fistful.eventsink.EventRange;
 import com.rbkmoney.geck.common.util.TypeUtil;
 import com.rbkmoney.geck.serializer.kit.mock.MockMode;
@@ -42,7 +39,7 @@ public class DepositEventSinkSrv implements com.rbkmoney.fistful.deposit.EventSi
         SinkEvent sinkEvent = new SinkEvent();
         sinkEvent.setId(id);
         sinkEvent.setCreatedAt(timeString);
-        sinkEvent.setPayload(new Event(1, timeString, Arrays.asList(Change.created(new Deposit()))));
+        sinkEvent.setPayload(new EventSinkPayload(1, timeString, Arrays.asList(Change.created(new CreatedChange(new Deposit())))));
         try {
             TBaseHandler<SinkEvent> handler = new TBaseHandler<>(SinkEvent.class);
             return new MockTBaseProcessor(MockMode.REQUIRED_ONLY).process(sinkEvent, handler);

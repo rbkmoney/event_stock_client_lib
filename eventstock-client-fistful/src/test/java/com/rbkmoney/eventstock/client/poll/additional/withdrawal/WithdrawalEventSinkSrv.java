@@ -1,10 +1,7 @@
 package com.rbkmoney.eventstock.client.poll.additional.withdrawal;
 
 import com.rbkmoney.fistful.eventsink.EventRange;
-import com.rbkmoney.fistful.withdrawal.Change;
-import com.rbkmoney.fistful.withdrawal.Event;
-import com.rbkmoney.fistful.withdrawal.SinkEvent;
-import com.rbkmoney.fistful.withdrawal.Withdrawal;
+import com.rbkmoney.fistful.withdrawal.*;
 import com.rbkmoney.geck.common.util.TypeUtil;
 import com.rbkmoney.geck.serializer.kit.mock.MockMode;
 import com.rbkmoney.geck.serializer.kit.mock.MockTBaseProcessor;
@@ -42,7 +39,7 @@ public class WithdrawalEventSinkSrv implements com.rbkmoney.fistful.withdrawal.E
         SinkEvent sinkEvent = new SinkEvent();
         sinkEvent.setId(id);
         sinkEvent.setCreatedAt(timeString);
-        sinkEvent.setPayload(new Event(1, timeString, Arrays.asList(Change.created(new Withdrawal()))));
+        sinkEvent.setPayload(new EventSinkPayload(1, timeString, Arrays.asList(Change.created(new CreatedChange(new Withdrawal())))));
         try {
             TBaseHandler<SinkEvent> handler = new TBaseHandler<>(SinkEvent.class);
             return new MockTBaseProcessor(MockMode.REQUIRED_ONLY).process(sinkEvent, handler);

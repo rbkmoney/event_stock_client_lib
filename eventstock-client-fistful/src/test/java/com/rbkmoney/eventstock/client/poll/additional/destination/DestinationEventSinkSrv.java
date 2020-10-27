@@ -1,9 +1,6 @@
 package com.rbkmoney.eventstock.client.poll.additional.destination;
 
-import com.rbkmoney.fistful.destination.Change;
-import com.rbkmoney.fistful.destination.Destination;
-import com.rbkmoney.fistful.destination.Event;
-import com.rbkmoney.fistful.destination.SinkEvent;
+import com.rbkmoney.fistful.destination.*;
 import com.rbkmoney.fistful.eventsink.EventRange;
 import com.rbkmoney.geck.common.util.TypeUtil;
 import com.rbkmoney.geck.serializer.kit.mock.MockMode;
@@ -42,7 +39,7 @@ public class DestinationEventSinkSrv implements com.rbkmoney.fistful.destination
         SinkEvent sinkEvent = new SinkEvent();
         sinkEvent.setId(id);
         sinkEvent.setCreatedAt(timeString);
-        sinkEvent.setPayload(new Event(1, timeString, Arrays.asList(Change.created(new Destination()))));
+        sinkEvent.setPayload(new EventSinkPayload(1, timeString, Arrays.asList(Change.created(new Destination()))));
         try {
             TBaseHandler<SinkEvent> handler = new TBaseHandler<>(SinkEvent.class);
             return new MockTBaseProcessor(MockMode.REQUIRED_ONLY).process(sinkEvent, handler);
