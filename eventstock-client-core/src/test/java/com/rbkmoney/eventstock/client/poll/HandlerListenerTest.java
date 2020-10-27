@@ -16,9 +16,6 @@ import java.util.stream.Collectors;
 import static java.lang.System.out;
 import static org.hamcrest.Matchers.is;
 
-/**
- * Created by vpankrashkin on 09.06.17.
- */
 public class HandlerListenerTest {
     @Test
     public void testHandling() throws InterruptedException {
